@@ -10,7 +10,7 @@ export interface CarState {
   name: string;
 }
 
-const TOTAL_LAPS = 3;
+const TOTAL_LAPS = 200;
 
 export function useGameState() {
   const [phase, setPhase] = useState<"countdown" | "racing" | "finished">("countdown");
