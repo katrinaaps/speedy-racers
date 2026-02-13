@@ -1,7 +1,8 @@
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import GameScene from "./GameScene";
 import HUD from "./HUD";
+import TouchControls from "./TouchControls";
 import { useGameState } from "./useGameState";
 
 export default function RacingGame() {
@@ -13,6 +14,30 @@ export default function RacingGame() {
   } = useGameState();
 
   const [hudUpdate, setHudUpdate] = useState(0);
+  const keysRef = useRef({ up: false, down: false, left: false, right: false });
+  const [isTouchDevice] = useState(() => "ontouchstart" in window || navigator.maxTouchPoints > 0);
+
+  // Keyboard controls
+  useEffect(() => {
+    const onDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowUp") keysRef.current.up = true;
+      if (e.key === "ArrowDown") keysRef.current.down = true;
+      if (e.key === "ArrowLeft") keysRef.current.left = true;
+      if (e.key === "ArrowRight") keysRef.current.right = true;
+    };
+    const onUp = (e: KeyboardEvent) => {
+      if (e.key === "ArrowUp") keysRef.current.up = false;
+      if (e.key === "ArrowDown") keysRef.current.down = false;
+      if (e.key === "ArrowLeft") keysRef.current.left = false;
+      if (e.key === "ArrowRight") keysRef.current.right = false;
+    };
+    window.addEventListener("keydown", onDown);
+    window.addEventListener("keyup", onUp);
+    return () => {
+      window.removeEventListener("keydown", onDown);
+      window.removeEventListener("keyup", onUp);
+    };
+  }, []);
 
   // Countdown timer
   useEffect(() => {
@@ -56,11 +81,13 @@ export default function RacingGame() {
           playerRef={playerRef}
           ai1Ref={ai1Ref}
           ai2Ref={ai2Ref}
+          keysRef={keysRef}
           onLapUpdate={onLapUpdate}
           onWin={onWin}
           totalLaps={TOTAL_LAPS}
         />
       </Canvas>
+      <TouchControls keysRef={keysRef} visible={isTouchDevice || phase === "racing"} />
       <HUD
         phase={phase}
         countdown={countdown}
