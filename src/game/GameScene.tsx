@@ -4,14 +4,22 @@ import * as THREE from "three";
 import Track from "./Track";
 import Car from "./Car";
 import { CarState, getTrackPosition, getTrackTangent, TRACK_A, TRACK_B, LANE_WIDTH } from "./useGameState";
-import { BOOST_DURATION, BOOST_COOLDOWN, BOOST_MULTIPLIER } from "./carUpgrades";
+import {
+  BOOST_DURATION, BOOST_COOLDOWN, BOOST_MULTIPLIER,
+  WINGS_DURATION, WINGS_COOLDOWN, WINGS_HEIGHT,
+  PARACHUTE_DURATION, PARACHUTE_COOLDOWN, PARACHUTE_BRAKE_FACTOR,
+  BIG_WHEELS_STEER_MULT,
+} from "./carUpgrades";
 
 interface GameSceneProps {
   phase: "countdown" | "racing" | "finished";
   playerRef: React.MutableRefObject<CarState>;
   ai1Ref: React.MutableRefObject<CarState>;
   ai2Ref: React.MutableRefObject<CarState>;
-  keysRef: React.MutableRefObject<{ up: boolean; down: boolean; left: boolean; right: boolean; boost: boolean }>;
+  keysRef: React.MutableRefObject<{
+    up: boolean; down: boolean; left: boolean; right: boolean;
+    boost: boolean; wings: boolean; parachute: boolean;
+  }>;
   onLapUpdate: () => void;
   onWin: (name: string) => void;
   totalLaps: number;
@@ -31,7 +39,6 @@ export default function GameScene({
   const { camera } = useThree();
 
   const checkLap = (car: CarState) => {
-    // Crossed start line when angle wraps past 2*PI
     const crossed = car.angle >= Math.PI * 2;
     if (crossed && !car.lastCrossed) {
       car.laps++;
@@ -52,14 +59,15 @@ export default function GameScene({
     const clampedDelta = Math.min(delta, 0.05);
     const dt = clampedDelta * 60;
 
-    // Player
     const p = playerRef.current;
     const k = keysRef.current;
+
+    // Acceleration
     if (k.up) p.speed = Math.min(p.speed + PLAYER_ACCEL * dt, PLAYER_MAX_SPEED);
     else if (k.down) p.speed = Math.max(p.speed - PLAYER_BRAKE * dt, -PLAYER_MAX_SPEED * 0.3);
     else p.speed = Math.max(0, p.speed - PLAYER_FRICTION * dt);
 
-    // Boost logic
+    // === BOOST ===
     if (p.boostCooldown > 0) p.boostCooldown -= dt;
     if (p.hasRockets && k.boost && !p.boostActive && p.boostCooldown <= 0) {
       p.boostActive = true;
@@ -75,10 +83,48 @@ export default function GameScene({
       }
     }
 
-    if (k.left) p.lane = Math.max(p.lane - STEER_SPEED * dt, -1.5);
-    if (k.right) p.lane = Math.min(p.lane + STEER_SPEED * dt, 2.5);
+    // === PARACHUTE ===
+    if (p.parachuteCooldown > 0) p.parachuteCooldown -= dt;
+    if (p.hasParachute && k.parachute && !p.parachuteActive && p.parachuteCooldown <= 0 && p.speed > 0.005) {
+      p.parachuteActive = true;
+      p.parachuteTimer = PARACHUTE_DURATION;
+    }
+    if (p.parachuteActive) {
+      p.parachuteTimer -= dt;
+      p.speed *= (1 - PARACHUTE_BRAKE_FACTOR * (dt / 60));
+      if (p.speed < 0.001) p.speed = 0;
+      if (p.parachuteTimer <= 0) {
+        p.parachuteActive = false;
+        p.parachuteCooldown = PARACHUTE_COOLDOWN;
+      }
+    }
 
-    // Adjust speed based on lane
+    // === WINGS ===
+    if (p.wingsCooldown > 0) p.wingsCooldown -= dt;
+    if (p.hasWings && k.wings && !p.wingsActive && p.wingsCooldown <= 0) {
+      p.wingsActive = true;
+      p.wingsTimer = WINGS_DURATION;
+    }
+    if (p.wingsActive) {
+      p.wingsTimer -= dt;
+      const progress = 1 - p.wingsTimer / WINGS_DURATION;
+      // Arc: go up then come down
+      p.flyHeight = Math.sin(progress * Math.PI) * WINGS_HEIGHT;
+      if (p.wingsTimer <= 0) {
+        p.wingsActive = false;
+        p.flyHeight = 0;
+        p.wingsCooldown = WINGS_COOLDOWN;
+      }
+    } else {
+      p.flyHeight = Math.max(0, p.flyHeight - 0.3 * dt); // safety descent
+    }
+
+    // === STEERING ===
+    const steerMult = p.hasBigWheels ? BIG_WHEELS_STEER_MULT : 1;
+    if (k.left) p.lane = Math.max(p.lane - STEER_SPEED * steerMult * dt, -1.5);
+    if (k.right) p.lane = Math.min(p.lane + STEER_SPEED * steerMult * dt, 2.5);
+
+    // Lane-based speed adjustment
     const offset = (p.lane - 1) * LANE_WIDTH;
     const effectiveA = TRACK_A + offset;
     const effectiveB = TRACK_B + offset;
@@ -104,7 +150,7 @@ export default function GameScene({
     checkLap(a2);
 
     // Camera follows player
-    const [px, py, pz] = getTrackPosition(p.angle, p.lane);
+    const [px, py, pz] = getTrackPosition(p.angle, p.lane, p.flyHeight);
     const rot = getTrackTangent(p.angle, p.lane);
     const camDist = 15;
     const camHeight = 8;
