@@ -30,6 +30,15 @@ export interface CarState {
 
 const TOTAL_LAPS = 200;
 
+function randomAIUpgrades(): Partial<CarState> {
+  return {
+    hasRockets: Math.random() > 0.4,
+    hasBigWheels: Math.random() > 0.5,
+    hasWings: Math.random() > 0.5,
+    hasParachute: Math.random() > 0.6,
+  };
+}
+
 function makeCarState(overrides: Partial<CarState>): CarState {
   return {
     angle: 0, speed: 0, lane: 1, laps: 0, lastCrossed: false,
@@ -48,8 +57,8 @@ export function useGameState() {
   const [winner, setWinner] = useState<string | null>(null);
 
   const playerRef = useRef<CarState>(makeCarState({ lane: 1, color: "#3b82f6", name: "You" }));
-  const ai1Ref = useRef<CarState>(makeCarState({ lane: 0, color: "#eab308", name: "Yellow" }));
-  const ai2Ref = useRef<CarState>(makeCarState({ lane: 2, color: "#ef4444", name: "Red" }));
+  const ai1Ref = useRef<CarState>(makeCarState({ lane: 0, color: "#eab308", name: "Yellow", ...randomAIUpgrades() }));
+  const ai2Ref = useRef<CarState>(makeCarState({ lane: 2, color: "#ef4444", name: "Red", ...randomAIUpgrades() }));
 
   const reset = useCallback((keepUpgrades?: boolean) => {
     const prev = playerRef.current;
@@ -60,8 +69,8 @@ export function useGameState() {
       hasWings: keepUpgrades ? prev.hasWings : false,
       hasParachute: keepUpgrades ? prev.hasParachute : false,
     });
-    ai1Ref.current = makeCarState({ lane: 0, color: "#eab308", name: "Yellow" });
-    ai2Ref.current = makeCarState({ lane: 2, color: "#ef4444", name: "Red" });
+    ai1Ref.current = makeCarState({ lane: 0, color: "#eab308", name: "Yellow", ...randomAIUpgrades() });
+    ai2Ref.current = makeCarState({ lane: 2, color: "#ef4444", name: "Red", ...randomAIUpgrades() });
     setWinner(null);
     setPhase("countdown");
     setCountdown(3);

@@ -136,19 +136,61 @@ export default function GameScene({
     p.angle += p.speed * dt * laneScale * speedMult;
     checkLap(p);
 
+    // AI helper: update upgrades for AI cars
+    const updateAICar = (car: CarState, baseSpeed: number, variationFn: () => number) => {
+      const variation = variationFn();
+      car.speed = baseSpeed * variation;
+
+      // AI boost logic
+      if (car.boostCooldown > 0) car.boostCooldown -= dt;
+      if (car.hasRockets && !car.boostActive && car.boostCooldown <= 0 && Math.random() < 0.005) {
+        car.boostActive = true;
+        car.boostTimer = BOOST_DURATION;
+      }
+      let aiSpeedMult = 1;
+      if (car.boostActive) {
+        car.boostTimer -= dt;
+        aiSpeedMult = BOOST_MULTIPLIER;
+        if (car.boostTimer <= 0) {
+          car.boostActive = false;
+          car.boostCooldown = BOOST_COOLDOWN;
+        }
+      }
+
+      // AI wings logic
+      if (car.wingsCooldown > 0) car.wingsCooldown -= dt;
+      if (car.hasWings && !car.wingsActive && car.wingsCooldown <= 0 && Math.random() < 0.003) {
+        car.wingsActive = true;
+        car.wingsTimer = WINGS_DURATION;
+      }
+      if (car.wingsActive) {
+        car.wingsTimer -= dt;
+        const progress = 1 - car.wingsTimer / WINGS_DURATION;
+        car.flyHeight = Math.sin(progress * Math.PI) * WINGS_HEIGHT;
+        if (car.wingsTimer <= 0) {
+          car.wingsActive = false;
+          car.flyHeight = 0;
+          car.wingsCooldown = WINGS_COOLDOWN;
+        }
+      } else {
+        car.flyHeight = Math.max(0, car.flyHeight - 0.3 * dt);
+      }
+
+      // AI big wheels: slightly better lane changes
+      if (car.hasBigWheels) {
+        // Subtle lane weaving
+        car.lane = 1 + Math.sin(car.angle * 1.5) * 0.3 * BIG_WHEELS_STEER_MULT * 0.3;
+      }
+
+      car.angle += car.speed * dt * aiSpeedMult;
+      checkLap(car);
+    };
+
     // AI 1
-    const a1 = ai1Ref.current;
-    const ai1Variation = 1 + Math.sin(a1.angle * 3) * 0.15;
-    a1.speed = AI1_SPEED * ai1Variation;
-    a1.angle += a1.speed * dt;
-    checkLap(a1);
+    updateAICar(ai1Ref.current, AI1_SPEED, () => 1 + Math.sin(ai1Ref.current.angle * 3) * 0.15);
 
     // AI 2
-    const a2 = ai2Ref.current;
-    const ai2Variation = 1 + Math.cos(a2.angle * 2.5) * 0.12;
-    a2.speed = AI2_SPEED * ai2Variation;
-    a2.angle += a2.speed * dt;
-    checkLap(a2);
+    updateAICar(ai2Ref.current, AI2_SPEED, () => 1 + Math.cos(ai2Ref.current.angle * 2.5) * 0.12);
 
     // Camera follows player
     const [px, py, pz] = getTrackPosition(p.angle, p.lane, p.flyHeight);
