@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import Track from "./Track";
@@ -10,6 +10,7 @@ interface GameSceneProps {
   playerRef: React.MutableRefObject<CarState>;
   ai1Ref: React.MutableRefObject<CarState>;
   ai2Ref: React.MutableRefObject<CarState>;
+  keysRef: React.MutableRefObject<{ up: boolean; down: boolean; left: boolean; right: boolean }>;
   onLapUpdate: () => void;
   onWin: (name: string) => void;
   totalLaps: number;
@@ -24,31 +25,9 @@ const AI1_SPEED = 0.018;
 const AI2_SPEED = 0.020;
 
 export default function GameScene({
-  phase, playerRef, ai1Ref, ai2Ref, onLapUpdate, onWin, totalLaps,
+  phase, playerRef, ai1Ref, ai2Ref, keysRef, onLapUpdate, onWin, totalLaps,
 }: GameSceneProps) {
-  const keys = useRef({ up: false, down: false, left: false, right: false });
   const { camera } = useThree();
-
-  useEffect(() => {
-    const onDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowUp") keys.current.up = true;
-      if (e.key === "ArrowDown") keys.current.down = true;
-      if (e.key === "ArrowLeft") keys.current.left = true;
-      if (e.key === "ArrowRight") keys.current.right = true;
-    };
-    const onUp = (e: KeyboardEvent) => {
-      if (e.key === "ArrowUp") keys.current.up = false;
-      if (e.key === "ArrowDown") keys.current.down = false;
-      if (e.key === "ArrowLeft") keys.current.left = false;
-      if (e.key === "ArrowRight") keys.current.right = false;
-    };
-    window.addEventListener("keydown", onDown);
-    window.addEventListener("keyup", onUp);
-    return () => {
-      window.removeEventListener("keydown", onDown);
-      window.removeEventListener("keyup", onUp);
-    };
-  }, []);
 
   const checkLap = (car: CarState) => {
     // Crossed start line when angle wraps past 2*PI
@@ -74,12 +53,13 @@ export default function GameScene({
 
     // Player
     const p = playerRef.current;
-    if (keys.current.up) p.speed = Math.min(p.speed + PLAYER_ACCEL * dt, PLAYER_MAX_SPEED);
-    else if (keys.current.down) p.speed = Math.max(p.speed - PLAYER_BRAKE * dt, -PLAYER_MAX_SPEED * 0.3);
+    const k = keysRef.current;
+    if (k.up) p.speed = Math.min(p.speed + PLAYER_ACCEL * dt, PLAYER_MAX_SPEED);
+    else if (k.down) p.speed = Math.max(p.speed - PLAYER_BRAKE * dt, -PLAYER_MAX_SPEED * 0.3);
     else p.speed = Math.max(0, p.speed - PLAYER_FRICTION * dt);
 
-    if (keys.current.left) p.lane = Math.max(p.lane - STEER_SPEED * dt, -1.5);
-    if (keys.current.right) p.lane = Math.min(p.lane + STEER_SPEED * dt, 2.5);
+    if (k.left) p.lane = Math.max(p.lane - STEER_SPEED * dt, -1.5);
+    if (k.right) p.lane = Math.min(p.lane + STEER_SPEED * dt, 2.5);
 
     // Adjust speed based on lane (outer lanes = longer path, need more angle speed to keep up)
     const offset = (p.lane - 1) * LANE_WIDTH;
