@@ -17,11 +17,17 @@ export default function RacingGame() {
 
   const [showGarage, setShowGarage] = useState(true);
   const [hudUpdate, setHudUpdate] = useState(0);
-  const keysRef = useRef({ up: false, down: false, left: false, right: false, boost: false });
+  const keysRef = useRef({
+    up: false, down: false, left: false, right: false,
+    boost: false, wings: false, parachute: false,
+  });
   const [isTouchDevice] = useState(() => "ontouchstart" in window || navigator.maxTouchPoints > 0);
 
   const handleGarageStart = useCallback((upgrades: CarUpgrades) => {
     playerRef.current.hasRockets = upgrades.boosterRockets;
+    playerRef.current.hasBigWheels = upgrades.bigWheels;
+    playerRef.current.hasWings = upgrades.wings;
+    playerRef.current.hasParachute = upgrades.parachute;
     setShowGarage(false);
   }, [playerRef]);
 
@@ -33,6 +39,8 @@ export default function RacingGame() {
       if (e.key === "ArrowLeft") keysRef.current.left = true;
       if (e.key === "ArrowRight") keysRef.current.right = true;
       if (e.key === " ") { e.preventDefault(); keysRef.current.boost = true; }
+      if (e.key === "w" || e.key === "W") keysRef.current.wings = true;
+      if (e.key === "p" || e.key === "P") keysRef.current.parachute = true;
     };
     const onUp = (e: KeyboardEvent) => {
       if (e.key === "ArrowUp") keysRef.current.up = false;
@@ -40,6 +48,8 @@ export default function RacingGame() {
       if (e.key === "ArrowLeft") keysRef.current.left = false;
       if (e.key === "ArrowRight") keysRef.current.right = false;
       if (e.key === " ") keysRef.current.boost = false;
+      if (e.key === "w" || e.key === "W") keysRef.current.wings = false;
+      if (e.key === "p" || e.key === "P") keysRef.current.parachute = false;
     };
     window.addEventListener("keydown", onDown);
     window.addEventListener("keyup", onUp);
@@ -89,6 +99,8 @@ export default function RacingGame() {
     return <Garage onStart={handleGarageStart} />;
   }
 
+  const p = playerRef.current;
+
   return (
     <div className="w-screen h-screen bg-black relative overflow-hidden">
       <Canvas
@@ -106,7 +118,13 @@ export default function RacingGame() {
           totalLaps={TOTAL_LAPS}
         />
       </Canvas>
-      <TouchControls keysRef={keysRef} visible={isTouchDevice || phase === "racing"} hasRockets={playerRef.current.hasRockets} />
+      <TouchControls
+        keysRef={keysRef}
+        visible={isTouchDevice || phase === "racing"}
+        hasRockets={p.hasRockets}
+        hasWings={p.hasWings}
+        hasParachute={p.hasParachute}
+      />
       <HUD
         phase={phase}
         countdown={countdown}
