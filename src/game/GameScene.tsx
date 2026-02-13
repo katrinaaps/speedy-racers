@@ -16,10 +16,10 @@ interface GameSceneProps {
   totalLaps: number;
 }
 
-const PLAYER_MAX_SPEED = 0.025;
-const PLAYER_ACCEL = 0.0004;
-const PLAYER_BRAKE = 0.0008;
-const PLAYER_FRICTION = 0.0001;
+const PLAYER_MAX_SPEED = 0.045;
+const PLAYER_ACCEL = 0.0006;
+const PLAYER_BRAKE = 0.001;
+const PLAYER_FRICTION = 0.00012;
 const STEER_SPEED = 0.03;
 const AI1_SPEED = 0.018;
 const AI2_SPEED = 0.020;
