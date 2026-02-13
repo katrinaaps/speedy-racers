@@ -3,7 +3,9 @@ import { Canvas } from "@react-three/fiber";
 import GameScene from "./GameScene";
 import HUD from "./HUD";
 import TouchControls from "./TouchControls";
+import Garage from "./Garage";
 import { useGameState } from "./useGameState";
+import { CarUpgrades } from "./carUpgrades";
 
 export default function RacingGame() {
   const {
@@ -13,9 +15,15 @@ export default function RacingGame() {
     reset, TOTAL_LAPS,
   } = useGameState();
 
+  const [showGarage, setShowGarage] = useState(true);
   const [hudUpdate, setHudUpdate] = useState(0);
-  const keysRef = useRef({ up: false, down: false, left: false, right: false });
+  const keysRef = useRef({ up: false, down: false, left: false, right: false, boost: false });
   const [isTouchDevice] = useState(() => "ontouchstart" in window || navigator.maxTouchPoints > 0);
+
+  const handleGarageStart = useCallback((upgrades: CarUpgrades) => {
+    playerRef.current.hasRockets = upgrades.boosterRockets;
+    setShowGarage(false);
+  }, [playerRef]);
 
   // Keyboard controls
   useEffect(() => {
@@ -24,12 +32,14 @@ export default function RacingGame() {
       if (e.key === "ArrowDown") keysRef.current.down = true;
       if (e.key === "ArrowLeft") keysRef.current.left = true;
       if (e.key === "ArrowRight") keysRef.current.right = true;
+      if (e.key === " ") { e.preventDefault(); keysRef.current.boost = true; }
     };
     const onUp = (e: KeyboardEvent) => {
       if (e.key === "ArrowUp") keysRef.current.up = false;
       if (e.key === "ArrowDown") keysRef.current.down = false;
       if (e.key === "ArrowLeft") keysRef.current.left = false;
       if (e.key === "ArrowRight") keysRef.current.right = false;
+      if (e.key === " ") keysRef.current.boost = false;
     };
     window.addEventListener("keydown", onDown);
     window.addEventListener("keyup", onUp);
@@ -67,8 +77,17 @@ export default function RacingGame() {
   }, [setWinner, setPhase]);
 
   const handleRestart = useCallback(() => {
-    reset();
+    reset(true);
   }, [reset]);
+
+  const handleBackToGarage = useCallback(() => {
+    reset();
+    setShowGarage(true);
+  }, [reset]);
+
+  if (showGarage) {
+    return <Garage onStart={handleGarageStart} />;
+  }
 
   return (
     <div className="w-screen h-screen bg-black relative overflow-hidden">
@@ -87,7 +106,7 @@ export default function RacingGame() {
           totalLaps={TOTAL_LAPS}
         />
       </Canvas>
-      <TouchControls keysRef={keysRef} visible={isTouchDevice || phase === "racing"} />
+      <TouchControls keysRef={keysRef} visible={isTouchDevice || phase === "racing"} hasRockets={playerRef.current.hasRockets} />
       <HUD
         phase={phase}
         countdown={countdown}
@@ -97,6 +116,7 @@ export default function RacingGame() {
         ai2Ref={ai2Ref}
         totalLaps={TOTAL_LAPS}
         onRestart={handleRestart}
+        onGarage={handleBackToGarage}
         hudUpdate={hudUpdate}
       />
     </div>

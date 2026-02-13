@@ -8,6 +8,10 @@ export interface CarState {
   lastCrossed: boolean;
   color: string;
   name: string;
+  boostActive: boolean;
+  boostTimer: number;
+  boostCooldown: number;
+  hasRockets: boolean;
 }
 
 const TOTAL_LAPS = 200;
@@ -19,18 +23,25 @@ export function useGameState() {
 
   const playerRef = useRef<CarState>({
     angle: 0, speed: 0, lane: 1, laps: 0, lastCrossed: false, color: "#3b82f6", name: "You",
+    boostActive: false, boostTimer: 0, boostCooldown: 0, hasRockets: false,
   });
   const ai1Ref = useRef<CarState>({
     angle: 0, speed: 0, lane: 0, laps: 0, lastCrossed: false, color: "#eab308", name: "Yellow",
+    boostActive: false, boostTimer: 0, boostCooldown: 0, hasRockets: false,
   });
   const ai2Ref = useRef<CarState>({
     angle: 0, speed: 0, lane: 2, laps: 0, lastCrossed: false, color: "#ef4444", name: "Red",
+    boostActive: false, boostTimer: 0, boostCooldown: 0, hasRockets: false,
   });
 
-  const reset = useCallback(() => {
-    playerRef.current = { angle: 0, speed: 0, lane: 1, laps: 0, lastCrossed: false, color: "#3b82f6", name: "You" };
-    ai1Ref.current = { angle: 0, speed: 0, lane: 0, laps: 0, lastCrossed: false, color: "#eab308", name: "Yellow" };
-    ai2Ref.current = { angle: 0, speed: 0, lane: 2, laps: 0, lastCrossed: false, color: "#ef4444", name: "Red" };
+  const reset = useCallback((keepRockets?: boolean) => {
+    const rockets = keepRockets ? playerRef.current.hasRockets : false;
+    playerRef.current = { angle: 0, speed: 0, lane: 1, laps: 0, lastCrossed: false, color: "#3b82f6", name: "You",
+      boostActive: false, boostTimer: 0, boostCooldown: 0, hasRockets: rockets };
+    ai1Ref.current = { angle: 0, speed: 0, lane: 0, laps: 0, lastCrossed: false, color: "#eab308", name: "Yellow",
+      boostActive: false, boostTimer: 0, boostCooldown: 0, hasRockets: false };
+    ai2Ref.current = { angle: 0, speed: 0, lane: 2, laps: 0, lastCrossed: false, color: "#ef4444", name: "Red",
+      boostActive: false, boostTimer: 0, boostCooldown: 0, hasRockets: false };
     setWinner(null);
     setPhase("countdown");
     setCountdown(3);
