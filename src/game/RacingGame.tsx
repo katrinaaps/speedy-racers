@@ -6,6 +6,7 @@ import TouchControls from "./TouchControls";
 import Garage from "./Garage";
 import { useGameState } from "./useGameState";
 import { CarUpgrades } from "./carUpgrades";
+import { startEngine, stopEngine, updateEngineSound, playCrowdCheer, playCountdownBeep } from "./audioEngine";
 
 export default function RacingGame() {
   const {
@@ -22,6 +23,7 @@ export default function RacingGame() {
     boost: false, wings: false, parachute: false,
   });
   const [isTouchDevice] = useState(() => "ontouchstart" in window || navigator.maxTouchPoints > 0);
+  const prevCountdownRef = useRef(3);
 
   const handleGarageStart = useCallback((upgrades: CarUpgrades) => {
     playerRef.current.hasRockets = upgrades.boosterRockets;
@@ -59,9 +61,17 @@ export default function RacingGame() {
     };
   }, []);
 
-  // Countdown timer
+  // Countdown timer + beeps
   useEffect(() => {
     if (phase !== "countdown") return;
+    if (countdown !== prevCountdownRef.current) {
+      prevCountdownRef.current = countdown;
+      if (countdown > 0) {
+        playCountdownBeep(false);
+      } else {
+        playCountdownBeep(true);
+      }
+    }
     if (countdown <= 0) {
       const t = setTimeout(() => setPhase("racing"), 500);
       return () => clearTimeout(t);
@@ -70,12 +80,32 @@ export default function RacingGame() {
     return () => clearTimeout(t);
   }, [phase, countdown, setPhase, setCountdown]);
 
-  // HUD refresh during racing
+  // Engine sound: start/stop with racing phase
+  useEffect(() => {
+    if (phase === "racing") {
+      startEngine();
+    } else {
+      stopEngine();
+    }
+    return () => stopEngine();
+  }, [phase]);
+
+  // Update engine pitch based on speed
   useEffect(() => {
     if (phase !== "racing") return;
-    const interval = setInterval(() => setHudUpdate((n) => n + 1), 100);
+    const interval = setInterval(() => {
+      updateEngineSound(playerRef.current.speed);
+      setHudUpdate((n) => n + 1);
+    }, 50);
     return () => clearInterval(interval);
-  }, [phase]);
+  }, [phase, playerRef]);
+
+  // Crowd cheer on finish
+  useEffect(() => {
+    if (phase === "finished" && winner) {
+      playCrowdCheer();
+    }
+  }, [phase, winner]);
 
   const onLapUpdate = useCallback(() => {
     setHudUpdate((n) => n + 1);
@@ -88,10 +118,12 @@ export default function RacingGame() {
 
   const handleRestart = useCallback(() => {
     reset(true);
+    prevCountdownRef.current = 3;
   }, [reset]);
 
   const handleBackToGarage = useCallback(() => {
     reset();
+    prevCountdownRef.current = 3;
     setShowGarage(true);
   }, [reset]);
 

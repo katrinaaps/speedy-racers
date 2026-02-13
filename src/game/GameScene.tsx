@@ -3,6 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import Track from "./Track";
 import Car from "./Car";
+import Spectators from "./Spectators";
 import { CarState, getTrackPosition, getTrackTangent, TRACK_A, TRACK_B, LANE_WIDTH } from "./useGameState";
 import {
   BOOST_DURATION, BOOST_COOLDOWN, BOOST_MULTIPLIER,
@@ -165,6 +166,7 @@ export default function GameScene({
       <ambientLight intensity={0.6} />
       <directionalLight position={[50, 50, 25]} intensity={1} castShadow />
       <Track />
+      <Spectators />
       <Car carRef={playerRef} />
       <Car carRef={ai1Ref} />
       <Car carRef={ai2Ref} />
