@@ -4,13 +4,14 @@ import * as THREE from "three";
 import Track from "./Track";
 import Car from "./Car";
 import { CarState, getTrackPosition, getTrackTangent, TRACK_A, TRACK_B, LANE_WIDTH } from "./useGameState";
+import { BOOST_DURATION, BOOST_COOLDOWN, BOOST_MULTIPLIER } from "./carUpgrades";
 
 interface GameSceneProps {
   phase: "countdown" | "racing" | "finished";
   playerRef: React.MutableRefObject<CarState>;
   ai1Ref: React.MutableRefObject<CarState>;
   ai2Ref: React.MutableRefObject<CarState>;
-  keysRef: React.MutableRefObject<{ up: boolean; down: boolean; left: boolean; right: boolean }>;
+  keysRef: React.MutableRefObject<{ up: boolean; down: boolean; left: boolean; right: boolean; boost: boolean }>;
   onLapUpdate: () => void;
   onWin: (name: string) => void;
   totalLaps: number;
@@ -58,10 +59,26 @@ export default function GameScene({
     else if (k.down) p.speed = Math.max(p.speed - PLAYER_BRAKE * dt, -PLAYER_MAX_SPEED * 0.3);
     else p.speed = Math.max(0, p.speed - PLAYER_FRICTION * dt);
 
+    // Boost logic
+    if (p.boostCooldown > 0) p.boostCooldown -= dt;
+    if (p.hasRockets && k.boost && !p.boostActive && p.boostCooldown <= 0) {
+      p.boostActive = true;
+      p.boostTimer = BOOST_DURATION;
+    }
+    let speedMult = 1;
+    if (p.boostActive) {
+      p.boostTimer -= dt;
+      speedMult = BOOST_MULTIPLIER;
+      if (p.boostTimer <= 0) {
+        p.boostActive = false;
+        p.boostCooldown = BOOST_COOLDOWN;
+      }
+    }
+
     if (k.left) p.lane = Math.max(p.lane - STEER_SPEED * dt, -1.5);
     if (k.right) p.lane = Math.min(p.lane + STEER_SPEED * dt, 2.5);
 
-    // Adjust speed based on lane (outer lanes = longer path, need more angle speed to keep up)
+    // Adjust speed based on lane
     const offset = (p.lane - 1) * LANE_WIDTH;
     const effectiveA = TRACK_A + offset;
     const effectiveB = TRACK_B + offset;
@@ -69,7 +86,7 @@ export default function GameScene({
     const baseCircum = Math.PI * (3 * (TRACK_A + TRACK_B) - Math.sqrt((3 * TRACK_A + TRACK_B) * (TRACK_A + 3 * TRACK_B)));
     const laneScale = baseCircum / circumApprox;
 
-    p.angle += p.speed * dt * laneScale;
+    p.angle += p.speed * dt * laneScale * speedMult;
     checkLap(p);
 
     // AI 1
