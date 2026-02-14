@@ -1,8 +1,33 @@
+export type BodyStyle = "sedan" | "sport" | "truck" | "formula";
+export type PaintColor = string;
+
+export const BODY_STYLES: { key: BodyStyle; label: string; description: string }[] = [
+  { key: "sedan", label: "Sedan", description: "Balanced all-rounder" },
+  { key: "sport", label: "Sport", description: "Low & sleek, built for speed" },
+  { key: "truck", label: "Truck", description: "Big & beefy, high profile" },
+  { key: "formula", label: "Formula", description: "Open-wheel racer" },
+];
+
+export const PAINT_COLORS: { color: string; label: string }[] = [
+  { color: "#3b82f6", label: "Blue" },
+  { color: "#ef4444", label: "Red" },
+  { color: "#22c55e", label: "Green" },
+  { color: "#eab308", label: "Yellow" },
+  { color: "#a855f7", label: "Purple" },
+  { color: "#f97316", label: "Orange" },
+  { color: "#06b6d4", label: "Cyan" },
+  { color: "#ec4899", label: "Pink" },
+  { color: "#ffffff", label: "White" },
+  { color: "#1a1a1a", label: "Black" },
+];
+
 export interface CarUpgrades {
   boosterRockets: boolean;
   bigWheels: boolean;
   wings: boolean;
   parachute: boolean;
+  bodyStyle: BodyStyle;
+  paintColor: PaintColor;
 }
 
 export const DEFAULT_UPGRADES: CarUpgrades = {
@@ -10,6 +35,8 @@ export const DEFAULT_UPGRADES: CarUpgrades = {
   bigWheels: false,
   wings: false,
   parachute: false,
+  bodyStyle: "sedan",
+  paintColor: "#3b82f6",
 };
 
 // Boost config
