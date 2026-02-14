@@ -87,7 +87,7 @@ export default function HUD({
           {/* Garage button */}
           <button
             onClick={onMidRaceGarage}
-            className="absolute bottom-8 right-6 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white font-bold px-4 py-2 rounded-xl transition-colors pointer-events-auto"
+            className="absolute top-6 left-1/2 translate-x-32 bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white font-bold text-lg px-6 py-3 rounded-xl transition-colors pointer-events-auto border border-white/20"
           >
             🔧 Workshop
           </button>
