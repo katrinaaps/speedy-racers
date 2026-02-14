@@ -14,6 +14,7 @@ export default function RacingGame() {
     winner, setWinner,
     playerRef, ai1Ref, ai2Ref,
     reset, TOTAL_LAPS,
+    level, advanceLevel, MAX_LEVEL,
   } = useGameState();
 
   const [showGarage, setShowGarage] = useState(true);
@@ -133,6 +134,12 @@ export default function RacingGame() {
     prevCountdownRef.current = 3;
   }, [reset]);
 
+  const handleNextLevel = useCallback(() => {
+    advanceLevel();
+    reset(true);
+    prevCountdownRef.current = 3;
+  }, [advanceLevel, reset]);
+
   const handleBackToGarage = useCallback(() => {
     reset();
     prevCountdownRef.current = 3;
@@ -164,6 +171,7 @@ export default function RacingGame() {
           onLapUpdate={onLapUpdate}
           onWin={onWin}
           totalLaps={TOTAL_LAPS}
+          level={level}
         />
       </Canvas>
       <TouchControls
@@ -185,6 +193,9 @@ export default function RacingGame() {
         onGarage={handleBackToGarage}
         onMidRaceGarage={handleOpenMidRaceGarage}
         hudUpdate={hudUpdate}
+        level={level}
+        maxLevel={MAX_LEVEL}
+        onNextLevel={handleNextLevel}
       />
     </div>
   );

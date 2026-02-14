@@ -25,6 +25,7 @@ interface GameSceneProps {
   onLapUpdate: () => void;
   onWin: (name: string) => void;
   totalLaps: number;
+  level: number;
 }
 
 const PLAYER_MAX_SPEED = 0.0667;
@@ -36,10 +37,10 @@ const AI1_SPEED = 0.018;
 const AI2_SPEED = 0.020;
 
 export default function GameScene({
-  phase, playerRef, ai1Ref, ai2Ref, keysRef, onLapUpdate, onWin, totalLaps,
+  phase, playerRef, ai1Ref, ai2Ref, keysRef, onLapUpdate, onWin, totalLaps, level,
 }: GameSceneProps) {
   const { camera } = useThree();
-  const obstacles = useMemo(() => generateObstacles(), []);
+  const obstacles = useMemo(() => generateObstacles(level), [level]);
   const checkLap = (car: CarState) => {
     const crossed = car.angle >= Math.PI * 2;
     if (crossed && !car.lastCrossed) {

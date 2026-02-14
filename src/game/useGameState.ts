@@ -32,6 +32,7 @@ export interface CarState {
 }
 
 const TOTAL_LAPS = 200;
+const MAX_LEVEL = 3;
 
 const AI_BODIES: BodyStyle[] = ["sedan", "sport", "truck", "formula"];
 const AI_COLORS = ["#eab308", "#ef4444", "#22c55e", "#a855f7", "#f97316", "#ec4899"];
@@ -62,6 +63,7 @@ export function useGameState() {
   const [phase, setPhase] = useState<"countdown" | "racing" | "finished">("countdown");
   const [countdown, setCountdown] = useState(3);
   const [winner, setWinner] = useState<string | null>(null);
+  const [level, setLevel] = useState(1);
 
   const playerRef = useRef<CarState>(makeCarState({ lane: 1, color: "#3b82f6", name: "You" }));
   const ai1Ref = useRef<CarState>(makeCarState({ lane: 0, color: AI_COLORS[Math.floor(Math.random() * AI_COLORS.length)], name: "Yellow", ...randomAIUpgrades() }));
@@ -83,11 +85,18 @@ export function useGameState() {
     setCountdown(3);
   }, []);
 
+  const advanceLevel = useCallback(() => {
+    if (level < MAX_LEVEL) {
+      setLevel(l => l + 1);
+    }
+  }, [level]);
+
   return {
     phase, setPhase, countdown, setCountdown,
     winner, setWinner,
     playerRef, ai1Ref, ai2Ref,
     reset, TOTAL_LAPS,
+    level, setLevel, advanceLevel, MAX_LEVEL,
   };
 }
 
