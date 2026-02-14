@@ -12,30 +12,32 @@ export interface ObstacleData {
   id: number;
 }
 
-// Generate random obstacles around the track
-export function generateObstacles(): ObstacleData[] {
+// Level configs: [walls, logs, pedestrians]
+const LEVEL_CONFIG: Record<number, { walls: number; logs: number; peds: number }> = {
+  1: { walls: 1, logs: 0, peds: 3 },
+  2: { walls: 2, logs: 2, peds: 4 },
+  3: { walls: 4, logs: 3, peds: 5 },
+};
+
+// Generate random obstacles around the track based on level
+export function generateObstacles(level: number = 1): ObstacleData[] {
+  const config = LEVEL_CONFIG[level] || LEVEL_CONFIG[1];
   const obstacles: ObstacleData[] = [];
   let id = 0;
 
-  // Walls - need wings to fly over (placed at ~6 positions around the track)
-  const wallCount = 4;
-  for (let i = 0; i < wallCount; i++) {
-    const angle = (i / wallCount) * Math.PI * 2 + Math.random() * 0.3;
-    const lane = Math.floor(Math.random() * 3); // 0, 1, or 2
+  for (let i = 0; i < config.walls; i++) {
+    const angle = (i / Math.max(config.walls, 1)) * Math.PI * 2 + Math.random() * 0.3;
+    const lane = Math.floor(Math.random() * 3);
     obstacles.push({ type: "wall", angle, lane, id: id++ });
   }
 
-  // Rolling logs - cross the track periodically
-  const logCount = 3;
-  for (let i = 0; i < logCount; i++) {
-    const angle = (i / logCount) * Math.PI * 2 + 0.5 + Math.random() * 0.4;
+  for (let i = 0; i < config.logs; i++) {
+    const angle = (i / Math.max(config.logs, 1)) * Math.PI * 2 + 0.5 + Math.random() * 0.4;
     obstacles.push({ type: "log", angle, lane: 1, id: id++ });
   }
 
-  // Pedestrians - walk across the track
-  const pedCount = 5;
-  for (let i = 0; i < pedCount; i++) {
-    const angle = (i / pedCount) * Math.PI * 2 + 0.2 + Math.random() * 0.3;
+  for (let i = 0; i < config.peds; i++) {
+    const angle = (i / Math.max(config.peds, 1)) * Math.PI * 2 + 0.2 + Math.random() * 0.3;
     obstacles.push({ type: "pedestrian", angle, lane: 1, id: id++ });
   }
 
