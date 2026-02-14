@@ -11,6 +11,7 @@ interface HUDProps {
   totalLaps: number;
   onRestart: () => void;
   onGarage: () => void;
+  onMidRaceGarage: () => void;
   hudUpdate: number;
 }
 
@@ -49,7 +50,7 @@ function AbilityIndicator({ label, emoji, active, ready, cooldownPct, timerPct, 
 }
 
 export default function HUD({
-  phase, countdown, winner, playerRef, ai1Ref, ai2Ref, totalLaps, onRestart, onGarage, hudUpdate,
+  phase, countdown, winner, playerRef, ai1Ref, ai2Ref, totalLaps, onRestart, onGarage, onMidRaceGarage, hudUpdate,
 }: HUDProps) {
   const player = playerRef.current;
   const speedDisplay = Math.round(player.speed * 6000);
@@ -82,6 +83,14 @@ export default function HUD({
             <div className="text-white text-3xl font-bold text-center">{speedDisplay}</div>
             <div className="text-white/70 text-sm font-medium text-center">KM/H</div>
           </div>
+
+          {/* Garage button */}
+          <button
+            onClick={onMidRaceGarage}
+            className="absolute bottom-8 right-6 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white font-bold px-4 py-2 rounded-xl transition-colors pointer-events-auto"
+          >
+            🔧 Workshop
+          </button>
 
           {/* Ability indicators - stacked on the right */}
           <div className="absolute top-6 right-6 flex flex-col gap-2">

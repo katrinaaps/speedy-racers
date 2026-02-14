@@ -4,6 +4,8 @@ import { CarUpgrades, DEFAULT_UPGRADES } from "./carUpgrades";
 
 interface GarageProps {
   onStart: (upgrades: CarUpgrades) => void;
+  onCancel?: () => void;
+  midRace?: boolean;
 }
 
 const UPGRADE_ITEMS: {
@@ -58,7 +60,7 @@ const UPGRADE_ITEMS: {
   },
 ];
 
-export default function Garage({ onStart }: GarageProps) {
+export default function Garage({ onStart, onCancel, midRace }: GarageProps) {
   const [upgrades, setUpgrades] = useState<CarUpgrades>({ ...DEFAULT_UPGRADES });
 
   const toggle = (key: keyof CarUpgrades) =>
@@ -105,12 +107,22 @@ export default function Garage({ onStart }: GarageProps) {
         })}
       </div>
 
-      <button
-        onClick={() => onStart(upgrades)}
-        className="mt-4 bg-blue-600 hover:bg-blue-500 text-white font-black text-xl px-10 py-4 rounded-2xl transition-colors shadow-lg shadow-blue-600/30"
-      >
-        🏁 START RACE
-      </button>
+      <div className="flex gap-4 mt-4">
+        {midRace && onCancel && (
+          <button
+            onClick={onCancel}
+            className="bg-gray-700 hover:bg-gray-600 text-white font-black text-xl px-10 py-4 rounded-2xl transition-colors"
+          >
+            ✕ Back to Race
+          </button>
+        )}
+        <button
+          onClick={() => onStart(upgrades)}
+          className="bg-blue-600 hover:bg-blue-500 text-white font-black text-xl px-10 py-4 rounded-2xl transition-colors shadow-lg shadow-blue-600/30"
+        >
+          {midRace ? "✅ Apply & Resume" : "🏁 START RACE"}
+        </button>
+      </div>
     </div>
   );
 }
