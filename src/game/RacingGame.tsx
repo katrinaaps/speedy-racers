@@ -17,6 +17,7 @@ export default function RacingGame() {
   } = useGameState();
 
   const [showGarage, setShowGarage] = useState(true);
+  const [midRaceGarage, setMidRaceGarage] = useState(false);
   const [hudUpdate, setHudUpdate] = useState(0);
   const keysRef = useRef({
     up: false, down: false, left: false, right: false,
@@ -31,7 +32,16 @@ export default function RacingGame() {
     playerRef.current.hasWings = upgrades.wings;
     playerRef.current.hasParachute = upgrades.parachute;
     setShowGarage(false);
+    setMidRaceGarage(false);
   }, [playerRef]);
+
+  const handleOpenMidRaceGarage = useCallback(() => {
+    setMidRaceGarage(true);
+  }, []);
+
+  const handleCloseMidRaceGarage = useCallback(() => {
+    setMidRaceGarage(false);
+  }, []);
 
   // Keyboard controls
   useEffect(() => {
@@ -131,6 +141,10 @@ export default function RacingGame() {
     return <Garage onStart={handleGarageStart} />;
   }
 
+  if (midRaceGarage) {
+    return <Garage onStart={handleGarageStart} onCancel={handleCloseMidRaceGarage} midRace />;
+  }
+
   const p = playerRef.current;
 
   return (
@@ -140,7 +154,7 @@ export default function RacingGame() {
         style={{ width: "100%", height: "100%" }}
       >
         <GameScene
-          phase={phase}
+          phase={midRaceGarage ? "countdown" : phase}
           playerRef={playerRef}
           ai1Ref={ai1Ref}
           ai2Ref={ai2Ref}
@@ -167,6 +181,7 @@ export default function RacingGame() {
         totalLaps={TOTAL_LAPS}
         onRestart={handleRestart}
         onGarage={handleBackToGarage}
+        onMidRaceGarage={handleOpenMidRaceGarage}
         hudUpdate={hudUpdate}
       />
     </div>
