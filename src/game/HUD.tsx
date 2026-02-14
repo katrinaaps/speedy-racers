@@ -58,7 +58,7 @@ export default function HUD({
   const position = getPosition(player, ai1Ref.current, ai2Ref.current);
 
   return (
-    <div className="absolute inset-0 pointer-events-none" style={{ fontFamily: "'Segoe UI', sans-serif" }}>
+    <div className="absolute inset-0 pointer-events-none z-[60]" style={{ fontFamily: "'Segoe UI', sans-serif" }}>
       {phase === "countdown" && (
         <div className="flex items-center justify-center h-full">
           <div className="text-8xl font-black text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]">
