@@ -31,6 +31,8 @@ export default function RacingGame() {
     playerRef.current.hasBigWheels = upgrades.bigWheels;
     playerRef.current.hasWings = upgrades.wings;
     playerRef.current.hasParachute = upgrades.parachute;
+    playerRef.current.bodyStyle = upgrades.bodyStyle;
+    playerRef.current.color = upgrades.paintColor;
     setShowGarage(false);
     setMidRaceGarage(false);
   }, [playerRef]);
