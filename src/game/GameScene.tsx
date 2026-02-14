@@ -1,9 +1,10 @@
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import Track from "./Track";
 import Car from "./Car";
 import Spectators from "./Spectators";
+import Obstacles, { generateObstacles, checkObstacleCollision } from "./Obstacles";
 import { CarState, getTrackPosition, getTrackTangent, TRACK_A, TRACK_B, LANE_WIDTH } from "./useGameState";
 import {
   BOOST_DURATION, BOOST_COOLDOWN, BOOST_MULTIPLIER,
@@ -38,7 +39,7 @@ export default function GameScene({
   phase, playerRef, ai1Ref, ai2Ref, keysRef, onLapUpdate, onWin, totalLaps,
 }: GameSceneProps) {
   const { camera } = useThree();
-
+  const obstacles = useMemo(() => generateObstacles(), []);
   const checkLap = (car: CarState) => {
     const crossed = car.angle >= Math.PI * 2;
     if (crossed && !car.lastCrossed) {
@@ -134,6 +135,12 @@ export default function GameScene({
     const laneScale = baseCircum / circumApprox;
 
     p.angle += p.speed * dt * laneScale * speedMult;
+    
+    // Obstacle collision - slow car down on hit
+    if (checkObstacleCollision(p.angle, p.lane, p.flyHeight, obstacles)) {
+      p.speed *= 0.3; // big slowdown on hit
+    }
+    
     checkLap(p);
 
     // AI helper: update upgrades for AI cars
@@ -209,6 +216,7 @@ export default function GameScene({
       <directionalLight position={[50, 50, 25]} intensity={1} castShadow />
       <Track />
       <Spectators />
+      <Obstacles obstacles={obstacles} />
       <Car carRef={playerRef} />
       <Car carRef={ai1Ref} />
       <Car carRef={ai2Ref} />

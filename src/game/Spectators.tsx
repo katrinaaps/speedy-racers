@@ -61,15 +61,49 @@ export default function Spectators() {
       {spectators.map((s) => (
         <Spectator key={s.key} position={s.position} color={s.color} />
       ))}
-      {/* Bleacher stands at the straights */}
+      {/* Large grandstands at the straights */}
       {[
-        [TRACK_A + 18, 0, 0] as [number, number, number],
-        [-(TRACK_A + 18), 0, 0] as [number, number, number],
-      ].map((pos, i) => (
-        <mesh key={`stand-${i}`} position={[pos[0], 1, pos[2]]}>
-          <boxGeometry args={[6, 2, 20]} />
-          <meshStandardMaterial color="#888888" />
-        </mesh>
+        { pos: [TRACK_A + 20, 0, 0] as [number, number, number], rotY: Math.PI / 2 },
+        { pos: [-(TRACK_A + 20), 0, 0] as [number, number, number], rotY: -Math.PI / 2 },
+        { pos: [0, 0, TRACK_B + 16] as [number, number, number], rotY: 0 },
+        { pos: [0, 0, -(TRACK_B + 16)] as [number, number, number], rotY: Math.PI },
+      ].map((stand, i) => (
+        <group key={`stand-${i}`} position={stand.pos} rotation-y={stand.rotY}>
+          {/* Tiered seating - 4 rows going up */}
+          {[0, 1, 2, 3].map((row) => (
+            <group key={`row-${row}`}>
+              {/* Seat platform */}
+              <mesh position={[0, row * 2 + 0.5, row * 1.5]}>
+                <boxGeometry args={[24, 0.4, 2.5]} />
+                <meshStandardMaterial color="#999999" />
+              </mesh>
+              {/* Back rest */}
+              <mesh position={[0, row * 2 + 1.2, row * 1.5 + 1.1]}>
+                <boxGeometry args={[24, 1, 0.2]} />
+                <meshStandardMaterial color="#777777" />
+              </mesh>
+            </group>
+          ))}
+          {/* Support structure underneath */}
+          {[-10, -5, 0, 5, 10].map((xOff, j) => (
+            <mesh key={`support-${j}`} position={[xOff, 3, 3]}>
+              <boxGeometry args={[0.5, 8, 8]} />
+              <meshStandardMaterial color="#666666" />
+            </mesh>
+          ))}
+          {/* Roof */}
+          <mesh position={[0, 8.5, 4]}>
+            <boxGeometry args={[26, 0.3, 10]} />
+            <meshStandardMaterial color="#555555" />
+          </mesh>
+          {/* Roof supports */}
+          {[-12, 12].map((xOff, j) => (
+            <mesh key={`roof-support-${j}`} position={[xOff, 5, 4]}>
+              <boxGeometry args={[0.4, 7, 0.4]} />
+              <meshStandardMaterial color="#444444" />
+            </mesh>
+          ))}
+        </group>
       ))}
     </group>
   );
