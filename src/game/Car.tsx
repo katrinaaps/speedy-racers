@@ -121,7 +121,7 @@ export default function Car({ carRef }: CarProps) {
     const [x, y, z] = getTrackPosition(car.angle, car.lane, car.flyHeight);
     const rot = getTrackTangent(car.angle, car.lane);
     meshRef.current.position.set(x, y, z);
-    meshRef.current.rotation.y = rot;
+    meshRef.current.rotation.y = rot + Math.PI;
   });
 
   const car = carRef.current;
