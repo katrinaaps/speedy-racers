@@ -1,5 +1,5 @@
 import { CarState } from "./useGameState";
-import { BOOST_COOLDOWN, BOOST_DURATION, WINGS_COOLDOWN, WINGS_DURATION, PARACHUTE_COOLDOWN, PARACHUTE_DURATION } from "./carUpgrades";
+import { BOOST_COOLDOWN, BOOST_DURATION, WINGS_COOLDOWN, WINGS_DURATION, PARACHUTE_COOLDOWN, PARACHUTE_DURATION, LASER_COOLDOWN } from "./carUpgrades";
 
 interface HUDProps {
   phase: "countdown" | "racing" | "finished";
@@ -136,6 +136,22 @@ export default function HUD({
                 timerPct={player.parachuteActive ? player.parachuteTimer / PARACHUTE_DURATION : 0}
                 keyHint="P"
               />
+            )}
+            {player.hasLaser && (
+              <AbilityIndicator
+                label="LASER" emoji="⚡"
+                active={player.laserFiring}
+                ready={!player.laserFiring && player.laserCooldown <= 0}
+                cooldownPct={player.laserCooldown > 0 ? player.laserCooldown / LASER_COOLDOWN : 0}
+                timerPct={0}
+                keyHint="L"
+              />
+            )}
+            {player.wheelDamaged && (
+              <div className="bg-red-900/60 backdrop-blur-sm rounded-xl px-4 py-2 w-36">
+                <div className="text-red-400 text-xs font-bold">⚠️ WHEELS DAMAGED</div>
+                <div className="text-white/50 text-xs">Steering impaired!</div>
+              </div>
             )}
           </div>
         </>

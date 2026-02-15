@@ -149,7 +149,11 @@ export default function Car({ carRef }: CarProps) {
       {wheelPositions.map((pos, i) => (
         <mesh key={i} position={pos} rotation-z={Math.PI / 2}>
           <cylinderGeometry args={[wheelRadius, wheelRadius, wheelWidth, 12]} />
-          <meshStandardMaterial color={car.hasBigWheels ? "#333333" : "#222222"} />
+          <meshStandardMaterial 
+            color={car.wheelDamaged ? "#ff3333" : (car.hasBigWheels ? "#333333" : "#222222")} 
+            emissive={car.wheelDamaged ? "#ff0000" : "#000000"}
+            emissiveIntensity={car.wheelDamaged ? 0.4 : 0}
+          />
         </mesh>
       ))}
 
@@ -200,6 +204,38 @@ export default function Car({ carRef }: CarProps) {
         <mesh position={[0, 0.7, 2.3]}>
           <boxGeometry args={[0.6, 0.5, 0.4]} />
           <meshStandardMaterial color="#cc3333" />
+        </mesh>
+      )}
+
+      {/* Laser turret */}
+      {car.hasLaser && (
+        <group position={[0, 1.2, -1.5]}>
+          {/* Turret base */}
+          <mesh>
+            <cylinderGeometry args={[0.25, 0.3, 0.3, 8]} />
+            <meshStandardMaterial color="#888888" metalness={0.8} roughness={0.2} />
+          </mesh>
+          {/* Barrel */}
+          <mesh position={[0, 0.1, -0.4]} rotation-x={Math.PI / 2}>
+            <cylinderGeometry args={[0.08, 0.08, 0.8, 6]} />
+            <meshStandardMaterial color="#ffcc00" metalness={0.9} roughness={0.1} emissive="#ffaa00" emissiveIntensity={0.3} />
+          </mesh>
+        </group>
+      )}
+
+      {/* Laser beam when firing */}
+      {car.laserFiring && car.hasLaser && (
+        <mesh position={[0, 1.2, -8]} rotation-x={Math.PI / 2}>
+          <cylinderGeometry args={[0.05, 0.05, 12, 6]} />
+          <meshStandardMaterial color="#ffff00" emissive="#ffff00" emissiveIntensity={2} transparent opacity={0.8} />
+        </mesh>
+      )}
+
+      {/* Upgraded engine exhaust glow */}
+      {car.hasUpgradedEngine && (
+        <mesh position={[0, 0.3, 2.3]}>
+          <sphereGeometry args={[0.25, 8, 8]} />
+          <meshStandardMaterial color="#8844ff" emissive="#8844ff" emissiveIntensity={0.6} transparent opacity={0.5} />
         </mesh>
       )}
     </group>

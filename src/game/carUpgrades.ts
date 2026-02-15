@@ -26,6 +26,8 @@ export interface CarUpgrades {
   bigWheels: boolean;
   wings: boolean;
   parachute: boolean;
+  laser: boolean;
+  upgradedEngine: boolean;
   bodyStyle: BodyStyle;
   paintColor: PaintColor;
 }
@@ -35,24 +37,34 @@ export const DEFAULT_UPGRADES: CarUpgrades = {
   bigWheels: false,
   wings: false,
   parachute: false,
+  laser: false,
+  upgradedEngine: false,
   bodyStyle: "sedan",
   paintColor: "#3b82f6",
 };
 
 // Boost config
-export const BOOST_DURATION = 120; // frames (~2 seconds at 60fps)
-export const BOOST_COOLDOWN = 600; // frames (~10 seconds)
+export const BOOST_DURATION = 120;
+export const BOOST_COOLDOWN = 600;
 export const BOOST_MULTIPLIER = 2.5;
 
 // Wings config
-export const WINGS_DURATION = 180; // frames (~3 seconds)
-export const WINGS_COOLDOWN = 480; // frames (~8 seconds)
-export const WINGS_HEIGHT = 6; // how high the car flies
+export const WINGS_DURATION = 180;
+export const WINGS_COOLDOWN = 480;
+export const WINGS_HEIGHT = 6;
 
 // Parachute config
-export const PARACHUTE_DURATION = 90; // frames (~1.5 seconds)
-export const PARACHUTE_COOLDOWN = 360; // frames (~6 seconds)
-export const PARACHUTE_BRAKE_FACTOR = 0.85; // speed multiplied by (1 - this) each frame
+export const PARACHUTE_DURATION = 90;
+export const PARACHUTE_COOLDOWN = 360;
+export const PARACHUTE_BRAKE_FACTOR = 0.85;
 
 // Big Wheels config
-export const BIG_WHEELS_STEER_MULT = 1.8; // steering speed multiplier
+export const BIG_WHEELS_STEER_MULT = 1.8;
+
+// Laser config
+export const LASER_COOLDOWN = 300; // frames (~5 seconds)
+export const LASER_RANGE = 0.8; // angle range to hit
+export const LASER_WHEEL_DAMAGE_DURATION = 360; // frames (~6 seconds) of impaired steering
+
+// Upgraded Engine config
+export const ENGINE_SPEED_MULT = 1.35; // 35% faster top speed
