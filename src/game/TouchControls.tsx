@@ -1,15 +1,16 @@
 import { useRef } from "react";
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Rocket, Feather, Umbrella } from "lucide-react";
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Rocket, Feather, Umbrella, Zap } from "lucide-react";
 
 interface TouchControlsProps {
   keysRef: React.MutableRefObject<{
     up: boolean; down: boolean; left: boolean; right: boolean;
-    boost: boolean; wings: boolean; parachute: boolean;
+    boost: boolean; wings: boolean; parachute: boolean; laser: boolean;
   }>;
   visible: boolean;
   hasRockets: boolean;
   hasWings: boolean;
   hasParachute: boolean;
+  hasLaser: boolean;
 }
 
 function PadButton({
@@ -37,7 +38,7 @@ function PadButton({
   );
 }
 
-export default function TouchControls({ keysRef, visible, hasRockets, hasWings, hasParachute }: TouchControlsProps) {
+export default function TouchControls({ keysRef, visible, hasRockets, hasWings, hasParachute, hasLaser }: TouchControlsProps) {
   if (!visible) return null;
   const k = keysRef.current;
   const btnClass = "w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center active:bg-white/40";
@@ -79,6 +80,12 @@ export default function TouchControls({ keysRef, visible, hasRockets, hasWings, 
             <PadButton onDown={() => (k.parachute = true)} onUp={() => (k.parachute = false)}
               className="w-14 h-14 rounded-full bg-red-500/40 backdrop-blur-sm flex items-center justify-center active:bg-red-500/70">
               <Umbrella className="w-6 h-6 text-white" />
+            </PadButton>
+          )}
+          {hasLaser && (
+            <PadButton onDown={() => (k.laser = true)} onUp={() => (k.laser = false)}
+              className="w-14 h-14 rounded-full bg-yellow-500/40 backdrop-blur-sm flex items-center justify-center active:bg-yellow-500/70">
+              <Zap className="w-6 h-6 text-white" />
             </PadButton>
           )}
         </div>

@@ -22,7 +22,7 @@ export default function RacingGame() {
   const [hudUpdate, setHudUpdate] = useState(0);
   const keysRef = useRef({
     up: false, down: false, left: false, right: false,
-    boost: false, wings: false, parachute: false,
+    boost: false, wings: false, parachute: false, laser: false,
   });
   const [isTouchDevice] = useState(() => "ontouchstart" in window || navigator.maxTouchPoints > 0);
   const prevCountdownRef = useRef(3);
@@ -32,6 +32,8 @@ export default function RacingGame() {
     playerRef.current.hasBigWheels = upgrades.bigWheels;
     playerRef.current.hasWings = upgrades.wings;
     playerRef.current.hasParachute = upgrades.parachute;
+    playerRef.current.hasLaser = upgrades.laser;
+    playerRef.current.hasUpgradedEngine = upgrades.upgradedEngine;
     playerRef.current.bodyStyle = upgrades.bodyStyle;
     playerRef.current.color = upgrades.paintColor;
     setShowGarage(false);
@@ -56,6 +58,7 @@ export default function RacingGame() {
       if (e.key === " ") { e.preventDefault(); keysRef.current.boost = true; }
       if (e.key === "w" || e.key === "W") keysRef.current.wings = true;
       if (e.key === "p" || e.key === "P") keysRef.current.parachute = true;
+      if (e.key === "l" || e.key === "L") keysRef.current.laser = true;
     };
     const onUp = (e: KeyboardEvent) => {
       if (e.key === "ArrowUp") keysRef.current.up = false;
@@ -65,6 +68,7 @@ export default function RacingGame() {
       if (e.key === " ") keysRef.current.boost = false;
       if (e.key === "w" || e.key === "W") keysRef.current.wings = false;
       if (e.key === "p" || e.key === "P") keysRef.current.parachute = false;
+      if (e.key === "l" || e.key === "L") keysRef.current.laser = false;
     };
     window.addEventListener("keydown", onDown);
     window.addEventListener("keyup", onUp);
@@ -180,6 +184,7 @@ export default function RacingGame() {
         hasRockets={p.hasRockets}
         hasWings={p.hasWings}
         hasParachute={p.hasParachute}
+        hasLaser={p.hasLaser}
       />
       <HUD
         phase={phase}

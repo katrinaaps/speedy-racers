@@ -29,6 +29,15 @@ export interface CarState {
   parachuteActive: boolean;
   parachuteTimer: number;
   parachuteCooldown: number;
+  // Laser
+  hasLaser: boolean;
+  laserCooldown: number;
+  laserFiring: boolean;
+  // Wheel damage (from being hit by laser)
+  wheelDamaged: boolean;
+  wheelDamageTimer: number;
+  // Upgraded Engine
+  hasUpgradedEngine: boolean;
 }
 
 const TOTAL_LAPS = 200;
@@ -43,6 +52,8 @@ function randomAIUpgrades(): Partial<CarState> {
     hasBigWheels: Math.random() > 0.5,
     hasWings: Math.random() > 0.5,
     hasParachute: Math.random() > 0.6,
+    hasLaser: Math.random() > 0.4,
+    hasUpgradedEngine: Math.random() > 0.5,
     bodyStyle: AI_BODIES[Math.floor(Math.random() * AI_BODIES.length)],
   };
 }
@@ -55,6 +66,9 @@ function makeCarState(overrides: Partial<CarState>): CarState {
     hasBigWheels: false,
     hasWings: false, wingsActive: false, wingsTimer: 0, wingsCooldown: 0, flyHeight: 0,
     hasParachute: false, parachuteActive: false, parachuteTimer: 0, parachuteCooldown: 0,
+    hasLaser: false, laserCooldown: 0, laserFiring: false,
+    wheelDamaged: false, wheelDamageTimer: 0,
+    hasUpgradedEngine: false,
     ...overrides,
   };
 }
@@ -77,6 +91,8 @@ export function useGameState() {
       hasBigWheels: keepUpgrades ? prev.hasBigWheels : false,
       hasWings: keepUpgrades ? prev.hasWings : false,
       hasParachute: keepUpgrades ? prev.hasParachute : false,
+      hasLaser: keepUpgrades ? prev.hasLaser : false,
+      hasUpgradedEngine: keepUpgrades ? prev.hasUpgradedEngine : false,
     });
     ai1Ref.current = makeCarState({ lane: 0, color: AI_COLORS[Math.floor(Math.random() * AI_COLORS.length)], name: "Yellow", ...randomAIUpgrades() });
     ai2Ref.current = makeCarState({ lane: 2, color: AI_COLORS[Math.floor(Math.random() * AI_COLORS.length)], name: "Red", ...randomAIUpgrades() });

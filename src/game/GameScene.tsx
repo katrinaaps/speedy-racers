@@ -10,7 +10,8 @@ import {
   BOOST_DURATION, BOOST_COOLDOWN, BOOST_MULTIPLIER,
   WINGS_DURATION, WINGS_COOLDOWN, WINGS_HEIGHT,
   PARACHUTE_DURATION, PARACHUTE_COOLDOWN, PARACHUTE_BRAKE_FACTOR,
-  BIG_WHEELS_STEER_MULT,
+  BIG_WHEELS_STEER_MULT, LASER_COOLDOWN, LASER_RANGE, LASER_WHEEL_DAMAGE_DURATION,
+  ENGINE_SPEED_MULT,
 } from "./carUpgrades";
 
 interface GameSceneProps {
@@ -20,7 +21,7 @@ interface GameSceneProps {
   ai2Ref: React.MutableRefObject<CarState>;
   keysRef: React.MutableRefObject<{
     up: boolean; down: boolean; left: boolean; right: boolean;
-    boost: boolean; wings: boolean; parachute: boolean;
+    boost: boolean; wings: boolean; parachute: boolean; laser: boolean;
   }>;
   onLapUpdate: () => void;
   onWin: (name: string) => void;
@@ -33,6 +34,7 @@ const PLAYER_ACCEL = 0.0009;
 const PLAYER_BRAKE = 0.0015;
 const PLAYER_FRICTION = 0.00015;
 const STEER_SPEED = 0.03;
+const DAMAGED_STEER_MULT = 0.3; // steering when wheels are damaged
 const AI1_SPEED = 0.018;
 const AI2_SPEED = 0.020;
 
@@ -65,9 +67,12 @@ export default function GameScene({
     const p = playerRef.current;
     const k = keysRef.current;
 
+    // Upgraded Engine: higher max speed
+    const maxSpeed = p.hasUpgradedEngine ? PLAYER_MAX_SPEED * ENGINE_SPEED_MULT : PLAYER_MAX_SPEED;
+
     // Acceleration
-    if (k.up) p.speed = Math.min(p.speed + PLAYER_ACCEL * dt, PLAYER_MAX_SPEED);
-    else if (k.down) p.speed = Math.max(p.speed - PLAYER_BRAKE * dt, -PLAYER_MAX_SPEED * 0.3);
+    if (k.up) p.speed = Math.min(p.speed + PLAYER_ACCEL * dt, maxSpeed);
+    else if (k.down) p.speed = Math.max(p.speed - PLAYER_BRAKE * dt, -maxSpeed * 0.3);
     else p.speed = Math.max(0, p.speed - PLAYER_FRICTION * dt);
 
     // === BOOST ===
@@ -122,8 +127,36 @@ export default function GameScene({
       p.flyHeight = Math.max(0, p.flyHeight - 0.3 * dt); // safety descent
     }
 
+    // === WHEEL DAMAGE ===
+    if (p.wheelDamaged) {
+      p.wheelDamageTimer -= dt;
+      if (p.wheelDamageTimer <= 0) {
+        p.wheelDamaged = false;
+        p.wheelDamageTimer = 0;
+      }
+    }
+
+    // === LASER ===
+    if (p.laserCooldown > 0) p.laserCooldown -= dt;
+    p.laserFiring = false;
+    if (p.hasLaser && k.laser && p.laserCooldown <= 0) {
+      p.laserFiring = true;
+      p.laserCooldown = LASER_COOLDOWN;
+      // Check if laser hits AI cars
+      const targets = [ai1Ref.current, ai2Ref.current];
+      for (const target of targets) {
+        const angleDiff = Math.abs(p.angle - target.angle) % (Math.PI * 2);
+        const laneDiff = Math.abs(p.lane - target.lane);
+        if (angleDiff < LASER_RANGE && laneDiff < 2) {
+          target.wheelDamaged = true;
+          target.wheelDamageTimer = LASER_WHEEL_DAMAGE_DURATION;
+        }
+      }
+    }
+
     // === STEERING ===
-    const steerMult = p.hasBigWheels ? BIG_WHEELS_STEER_MULT : 1;
+    let steerMult = p.hasBigWheels ? BIG_WHEELS_STEER_MULT : 1;
+    if (p.wheelDamaged) steerMult *= DAMAGED_STEER_MULT;
     if (k.left) p.lane = Math.max(p.lane - STEER_SPEED * steerMult * dt, -1.5);
     if (k.right) p.lane = Math.min(p.lane + STEER_SPEED * steerMult * dt, 2.5);
 
@@ -145,9 +178,22 @@ export default function GameScene({
     checkLap(p);
 
     // AI helper: update upgrades for AI cars
+    const allCars = [playerRef.current, ai1Ref.current, ai2Ref.current];
     const updateAICar = (car: CarState, baseSpeed: number, variationFn: () => number) => {
       const variation = variationFn();
-      car.speed = baseSpeed * variation;
+      let aiMaxSpeed = baseSpeed * variation;
+      if (car.hasUpgradedEngine) aiMaxSpeed *= ENGINE_SPEED_MULT;
+      car.speed = aiMaxSpeed;
+
+      // AI wheel damage tick
+      if (car.wheelDamaged) {
+        car.wheelDamageTimer -= dt;
+        car.speed *= 0.6; // damaged wheels slow AI down
+        if (car.wheelDamageTimer <= 0) {
+          car.wheelDamaged = false;
+          car.wheelDamageTimer = 0;
+        }
+      }
 
       // AI boost logic
       if (car.boostCooldown > 0) car.boostCooldown -= dt;
@@ -184,9 +230,26 @@ export default function GameScene({
         car.flyHeight = Math.max(0, car.flyHeight - 0.3 * dt);
       }
 
+      // AI laser: randomly shoot at player
+      if (car.laserCooldown > 0) car.laserCooldown -= dt;
+      car.laserFiring = false;
+      if (car.hasLaser && car.laserCooldown <= 0 && Math.random() < 0.003) {
+        car.laserFiring = true;
+        car.laserCooldown = LASER_COOLDOWN;
+        // Check hit on other cars
+        for (const target of allCars) {
+          if (target === car) continue;
+          const angleDiff = Math.abs(car.angle - target.angle) % (Math.PI * 2);
+          const laneDiff = Math.abs(car.lane - target.lane);
+          if (angleDiff < LASER_RANGE && laneDiff < 2) {
+            target.wheelDamaged = true;
+            target.wheelDamageTimer = LASER_WHEEL_DAMAGE_DURATION;
+          }
+        }
+      }
+
       // AI big wheels: slightly better lane changes
       if (car.hasBigWheels) {
-        // Subtle lane weaving
         car.lane = 1 + Math.sin(car.angle * 1.5) * 0.3 * BIG_WHEELS_STEER_MULT * 0.3;
       }
 

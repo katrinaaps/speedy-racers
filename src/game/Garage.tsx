@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Rocket, CircleDot, Feather, Umbrella, Car, Paintbrush, Wrench } from "lucide-react";
+import { Rocket, CircleDot, Feather, Umbrella, Car, Paintbrush, Wrench, Zap, Gauge } from "lucide-react";
 import { CarUpgrades, DEFAULT_UPGRADES, BODY_STYLES, PAINT_COLORS, BodyStyle } from "./carUpgrades";
 
 interface GarageProps {
@@ -59,6 +59,26 @@ const UPGRADE_ITEMS: {
     activeBg: "bg-red-500/20",
     activeShadow: "shadow-[0_0_30px_rgba(239,68,68,0.3)]",
     activeText: "text-red-400",
+  },
+  {
+    key: "laser",
+    label: "Laser",
+    description: "Press L to shoot & damage wheels",
+    icon: <Zap className="w-7 h-7 text-white" />,
+    activeColor: "border-yellow-500",
+    activeBg: "bg-yellow-500/20",
+    activeShadow: "shadow-[0_0_30px_rgba(234,179,8,0.3)]",
+    activeText: "text-yellow-400",
+  },
+  {
+    key: "upgradedEngine",
+    label: "Upgraded Engine",
+    description: "35% faster top speed",
+    icon: <Gauge className="w-7 h-7 text-white" />,
+    activeColor: "border-purple-500",
+    activeBg: "bg-purple-500/20",
+    activeShadow: "shadow-[0_0_30px_rgba(168,85,247,0.3)]",
+    activeText: "text-purple-400",
   },
 ];
 
