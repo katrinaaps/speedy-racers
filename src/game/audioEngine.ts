@@ -24,12 +24,12 @@ export function startEngine() {
   // Main engine drone (sawtooth for gritty engine feel)
   engineOsc = ctx.createOscillator();
   engineOsc.type = "sawtooth";
-  engineOsc.frequency.value = 80;
+  engineOsc.frequency.value = 45;
 
   // Secondary harmonic
   engineOsc2 = ctx.createOscillator();
   engineOsc2.type = "square";
-  engineOsc2.frequency.value = 120;
+  engineOsc2.frequency.value = 67;
 
   engineGain = ctx.createGain();
   engineGain.gain.value = 0.06;
@@ -40,7 +40,7 @@ export function startEngine() {
   // Low-pass filter for muffled engine sound
   const filter = ctx.createBiquadFilter();
   filter.type = "lowpass";
-  filter.frequency.value = 600;
+  filter.frequency.value = 400;
   filter.Q.value = 2;
 
   engineOsc.connect(filter);
@@ -58,7 +58,7 @@ export function updateEngineSound(speed: number) {
   if (!engineOsc || !engineGain || !engineOsc2) return;
   // Map speed (0 to ~0.045) to frequency (80 to 400 Hz)
   const normalizedSpeed = Math.min(speed / 0.045, 1);
-  const freq = 80 + normalizedSpeed * 320;
+  const freq = 45 + normalizedSpeed * 180;
   engineOsc.frequency.value = freq;
   engineOsc2.frequency.value = freq * 1.5;
   // Volume increases slightly with speed
