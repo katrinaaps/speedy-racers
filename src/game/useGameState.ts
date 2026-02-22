@@ -40,7 +40,7 @@ export interface CarState {
   hasUpgradedEngine: boolean;
 }
 
-const TOTAL_LAPS = 200;
+const TOTAL_LAPS = 5;
 const MAX_LEVEL = 3;
 
 const AI_BODIES: BodyStyle[] = ["sedan", "sport", "truck", "formula"];
@@ -116,9 +116,9 @@ export function useGameState() {
   };
 }
 
-// Oval track helpers
-export const TRACK_A = 50;
-export const TRACK_B = 30;
+// Oval track dimensions — level 1 is larger for a longer lap
+export const TRACK_A = 80;
+export const TRACK_B = 45;
 export const LANE_WIDTH = 4;
 
 export function getTrackPosition(angle: number, lane: number, flyHeight = 0): [number, number, number] {
