@@ -8,9 +8,9 @@ interface TrackProps {
 
 // Theme configs per level
 const LEVEL_THEMES: Record<number, { ground: string; track: string; line: string }> = {
-  1: { ground: "#2d5a1e", track: "#444444", line: "#ffffff" },
-  2: { ground: "#6b4f3a", track: "#5a5a5a", line: "#dddddd" },
-  3: { ground: "#2d5a1e", track: "#333333", line: "#ffffff" },
+  1: { ground: "#2d5a1e", track: "#444444", line: "#ffffff" },      // Summer
+  2: { ground: "#8b6914", track: "#5a5a5a", line: "#dddddd" },      // Autumn mountains
+  3: { ground: "#d0dde8", track: "#3a3a4a", line: "#cccccc" },      // Winter snow
 };
 
 function Mountain({ position, scale, color }: { position: [number, number, number]; scale: number; color: string }) {

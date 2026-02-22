@@ -274,11 +274,32 @@ export default function GameScene({
     camera.lookAt(px, py + 1, pz);
   });
 
+  // Level themes: 1=summer day, 2=autumn sunset, 3=winter night
+  const themes: Record<number, {
+    ambient: number; dirColor: string; dirIntensity: number;
+    dirPos: [number,number,number]; fogColor: string; fogNear: number; fogFar: number; skyColor: string;
+    hemiSky: string; hemiGround: string; hemiIntensity: number;
+  }> = {
+    1: { ambient: 0.7, dirColor: "#ffffff", dirIntensity: 1.2, dirPos: [50,60,25], fogColor: "#87ceeb", fogNear: 150, fogFar: 350, skyColor: "#87ceeb", hemiSky: "#aaccff", hemiGround: "#2d5a1e", hemiIntensity: 0.4 },
+    2: { ambient: 0.4, dirColor: "#ff9944", dirIntensity: 0.9, dirPos: [20,20,40], fogColor: "#c47a3a", fogNear: 60, fogFar: 200, skyColor: "#d4764e", hemiSky: "#ff8844", hemiGround: "#553322", hemiIntensity: 0.4 },
+    3: { ambient: 0.12, dirColor: "#8899cc", dirIntensity: 0.35, dirPos: [30,40,20], fogColor: "#111122", fogNear: 80, fogFar: 250, skyColor: "#0a0a1a", hemiSky: "#223355", hemiGround: "#111111", hemiIntensity: 0.25 },
+  };
+  const th = themes[level] || themes[1];
+
   return (
     <>
-      <ambientLight intensity={level === 2 ? 0.5 : 0.6} />
-      <directionalLight position={[50, 50, 25]} intensity={1} castShadow />
-      {level === 2 && <fog attach="fog" args={["#8a9aaa", 60, 180]} />}
+      <color attach="background" args={[th.skyColor]} />
+      <ambientLight intensity={th.ambient} />
+      <directionalLight position={th.dirPos} intensity={th.dirIntensity} color={th.dirColor} castShadow />
+      <hemisphereLight args={[th.hemiSky, th.hemiGround, th.hemiIntensity]} />
+      <fog attach="fog" args={[th.fogColor, th.fogNear, th.fogFar]} />
+      {/* Moon for winter night */}
+      {level === 3 && (
+        <mesh position={[60, 80, -40]}>
+          <sphereGeometry args={[5, 16, 16]} />
+          <meshBasicMaterial color="#eeeedd" />
+        </mesh>
+      )}
       <Track level={level} />
       <Spectators level={level} />
       <Obstacles obstacles={obstacles} />
