@@ -276,10 +276,11 @@ export default function GameScene({
 
   return (
     <>
-      <ambientLight intensity={0.6} />
+      <ambientLight intensity={level === 2 ? 0.5 : 0.6} />
       <directionalLight position={[50, 50, 25]} intensity={1} castShadow />
-      <Track />
-      <Spectators />
+      {level === 2 && <fog attach="fog" args={["#8a9aaa", 60, 180]} />}
+      <Track level={level} />
+      <Spectators level={level} />
       <Obstacles obstacles={obstacles} />
       <Car carRef={playerRef} />
       <Car carRef={ai1Ref} />
