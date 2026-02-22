@@ -40,7 +40,7 @@ export interface CarState {
   hasUpgradedEngine: boolean;
 }
 
-const TOTAL_LAPS = 5;
+const LAPS_PER_LEVEL: Record<number, number> = { 1: 50, 2: 100, 3: 300 };
 const MAX_LEVEL = 3;
 
 const AI_BODIES: BodyStyle[] = ["sedan", "sport", "truck", "formula"];
@@ -111,7 +111,7 @@ export function useGameState() {
     phase, setPhase, countdown, setCountdown,
     winner, setWinner,
     playerRef, ai1Ref, ai2Ref,
-    reset, TOTAL_LAPS,
+    reset, TOTAL_LAPS: LAPS_PER_LEVEL[level] || 50,
     level, setLevel, advanceLevel, MAX_LEVEL,
   };
 }
