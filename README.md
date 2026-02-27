@@ -2,7 +2,7 @@
 
 ## About This Project
 
-This racing game was built collaboratively on [Lovable](https://lovable.dev) by a seven-year-old with a big imagination and his uncle, using voice mode to bring his creative vision to life. It was a really fun experiment showing how kids with active imaginations and strong interests can use AI to build something real — no coding experience required!
+This racing game was built collaboratively on [Lovable](https://lovable.dev) by a seven-year-old with a big imagination using voice mode to bring his creative vision to life. It was a really fun experiment showing how kids with active imaginations and strong interests can use AI to build something real — no coding experience required!
 
 ## Project Info
 
