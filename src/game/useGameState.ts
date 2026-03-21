@@ -11,6 +11,8 @@ export interface CarState {
   color: string;
   name: string;
   bodyStyle: BodyStyle;
+  decal: string | null;
+  decalColor: string;
   // Rockets
   boostActive: boolean;
   boostTimer: number;
