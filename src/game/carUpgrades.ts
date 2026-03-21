@@ -54,6 +54,8 @@ export const DEFAULT_UPGRADES: CarUpgrades = {
   upgradedEngine: false,
   bodyStyle: "sedan",
   paintColor: "#3b82f6",
+  decal: null,
+  decalColor: "#ffffff",
 };
 
 // Boost config
