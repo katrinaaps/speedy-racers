@@ -146,6 +146,9 @@ export default function Car({ carRef }: CarProps) {
       {body === "truck" && <TruckBody color={color} />}
       {body === "formula" && <FormulaBody color={color} />}
 
+      {/* Decals */}
+      <CarDecals decal={car.decal} decalColor={car.decalColor} bodyStyle={body} />
+
       {/* Wheels */}
       {wheelPositions.map((pos, i) => (
         <mesh key={i} position={pos} rotation-z={Math.PI / 2}>
