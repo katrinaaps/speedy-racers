@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { CarState, getTrackPosition, getTrackTangent } from "./useGameState";
+import CarDecals from "./CarDecals";
 
 interface CarProps {
   carRef: React.MutableRefObject<CarState>;
@@ -144,6 +145,9 @@ export default function Car({ carRef }: CarProps) {
       {body === "sport" && <SportBody color={color} />}
       {body === "truck" && <TruckBody color={color} />}
       {body === "formula" && <FormulaBody color={color} />}
+
+      {/* Decals */}
+      <CarDecals decal={car.decal} decalColor={car.decalColor} bodyStyle={body} />
 
       {/* Wheels */}
       {wheelPositions.map((pos, i) => (

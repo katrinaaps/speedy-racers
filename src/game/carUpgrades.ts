@@ -1,5 +1,16 @@
 export type BodyStyle = "sedan" | "sport" | "truck" | "formula";
 export type PaintColor = string;
+export type DecalType = "flames" | "racing_stripes" | "stars" | "lightning" | "flag" | "checker" | null;
+
+export const DECAL_OPTIONS: { key: DecalType; label: string; description: string }[] = [
+  { key: null, label: "None", description: "Clean look, no decals" },
+  { key: "flames", label: "Flames", description: "Hot flames on the sides" },
+  { key: "racing_stripes", label: "Racing Stripes", description: "Classic twin stripes" },
+  { key: "stars", label: "Stars", description: "Star pattern" },
+  { key: "lightning", label: "Lightning", description: "Electric bolt design" },
+  { key: "flag", label: "Flag", description: "Flag pattern on hood" },
+  { key: "checker", label: "Checkered", description: "Checkered racing pattern" },
+];
 
 export const BODY_STYLES: { key: BodyStyle; label: string; description: string }[] = [
   { key: "sedan", label: "Sedan", description: "Balanced all-rounder" },
@@ -30,6 +41,8 @@ export interface CarUpgrades {
   upgradedEngine: boolean;
   bodyStyle: BodyStyle;
   paintColor: PaintColor;
+  decal: DecalType;
+  decalColor: string;
 }
 
 export const DEFAULT_UPGRADES: CarUpgrades = {
@@ -41,6 +54,8 @@ export const DEFAULT_UPGRADES: CarUpgrades = {
   upgradedEngine: false,
   bodyStyle: "sedan",
   paintColor: "#3b82f6",
+  decal: null,
+  decalColor: "#ffffff",
 };
 
 // Boost config

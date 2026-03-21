@@ -11,6 +11,8 @@ export interface CarState {
   color: string;
   name: string;
   bodyStyle: BodyStyle;
+  decal: string | null;
+  decalColor: string;
   // Rockets
   boostActive: boolean;
   boostTimer: number;
@@ -62,6 +64,7 @@ function makeCarState(overrides: Partial<CarState>): CarState {
   return {
     angle: 0, speed: 0, lane: 1, laps: 0, lastCrossed: false,
     color: "#3b82f6", name: "You", bodyStyle: "sedan" as BodyStyle,
+    decal: null, decalColor: "#ffffff",
     boostActive: false, boostTimer: 0, boostCooldown: 0, hasRockets: false,
     hasBigWheels: false,
     hasWings: false, wingsActive: false, wingsTimer: 0, wingsCooldown: 0, flyHeight: 0,
