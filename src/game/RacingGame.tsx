@@ -36,6 +36,8 @@ export default function RacingGame() {
     playerRef.current.hasUpgradedEngine = upgrades.upgradedEngine;
     playerRef.current.bodyStyle = upgrades.bodyStyle;
     playerRef.current.color = upgrades.paintColor;
+    playerRef.current.decal = upgrades.decal;
+    playerRef.current.decalColor = upgrades.decalColor;
     setShowGarage(false);
     setMidRaceGarage(false);
   }, [playerRef]);

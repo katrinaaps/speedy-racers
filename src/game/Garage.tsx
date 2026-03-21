@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Rocket, CircleDot, Feather, Umbrella, Car, Paintbrush, Wrench, Zap, Gauge } from "lucide-react";
-import { CarUpgrades, DEFAULT_UPGRADES, BODY_STYLES, PAINT_COLORS, BodyStyle } from "./carUpgrades";
+import { Rocket, CircleDot, Feather, Umbrella, Car, Paintbrush, Wrench, Zap, Gauge, Sticker, Flame } from "lucide-react";
+import { CarUpgrades, DEFAULT_UPGRADES, BODY_STYLES, PAINT_COLORS, DECAL_OPTIONS, BodyStyle, DecalType } from "./carUpgrades";
 
 interface GarageProps {
   onStart: (upgrades: CarUpgrades) => void;
@@ -8,7 +8,7 @@ interface GarageProps {
   midRace?: boolean;
 }
 
-type GarageTab = "upgrades" | "body" | "paint";
+type GarageTab = "upgrades" | "body" | "paint" | "decals";
 
 const UPGRADE_ITEMS: {
   key: keyof CarUpgrades;
@@ -21,79 +21,65 @@ const UPGRADE_ITEMS: {
   activeText: string;
 }[] = [
   {
-    key: "boosterRockets",
-    label: "Booster Rockets",
-    description: "Press SPACE for a speed burst",
+    key: "boosterRockets", label: "Booster Rockets", description: "Press SPACE for a speed burst",
     icon: <Rocket className="w-7 h-7 text-white" />,
-    activeColor: "border-orange-500",
-    activeBg: "bg-orange-500/20",
-    activeShadow: "shadow-[0_0_30px_rgba(249,115,22,0.3)]",
-    activeText: "text-orange-400",
+    activeColor: "border-orange-500", activeBg: "bg-orange-500/20",
+    activeShadow: "shadow-[0_0_30px_rgba(249,115,22,0.3)]", activeText: "text-orange-400",
   },
   {
-    key: "bigWheels",
-    label: "Big Wheels",
-    description: "1.8× faster steering & grip",
+    key: "bigWheels", label: "Big Wheels", description: "1.8× faster steering & grip",
     icon: <CircleDot className="w-7 h-7 text-white" />,
-    activeColor: "border-green-500",
-    activeBg: "bg-green-500/20",
-    activeShadow: "shadow-[0_0_30px_rgba(34,197,94,0.3)]",
-    activeText: "text-green-400",
+    activeColor: "border-green-500", activeBg: "bg-green-500/20",
+    activeShadow: "shadow-[0_0_30px_rgba(34,197,94,0.3)]", activeText: "text-green-400",
   },
   {
-    key: "wings",
-    label: "Wings",
-    description: "Press W to fly over the track",
+    key: "wings", label: "Wings", description: "Press W to fly over the track",
     icon: <Feather className="w-7 h-7 text-white" />,
-    activeColor: "border-sky-500",
-    activeBg: "bg-sky-500/20",
-    activeShadow: "shadow-[0_0_30px_rgba(14,165,233,0.3)]",
-    activeText: "text-sky-400",
+    activeColor: "border-sky-500", activeBg: "bg-sky-500/20",
+    activeShadow: "shadow-[0_0_30px_rgba(14,165,233,0.3)]", activeText: "text-sky-400",
   },
   {
-    key: "parachute",
-    label: "Parachute",
-    description: "Press P for emergency braking",
+    key: "parachute", label: "Parachute", description: "Press P for emergency braking",
     icon: <Umbrella className="w-7 h-7 text-white" />,
-    activeColor: "border-red-500",
-    activeBg: "bg-red-500/20",
-    activeShadow: "shadow-[0_0_30px_rgba(239,68,68,0.3)]",
-    activeText: "text-red-400",
+    activeColor: "border-red-500", activeBg: "bg-red-500/20",
+    activeShadow: "shadow-[0_0_30px_rgba(239,68,68,0.3)]", activeText: "text-red-400",
   },
   {
-    key: "laser",
-    label: "Laser",
-    description: "Press L to shoot & damage wheels",
+    key: "laser", label: "Laser", description: "Press L to shoot & damage wheels",
     icon: <Zap className="w-7 h-7 text-white" />,
-    activeColor: "border-yellow-500",
-    activeBg: "bg-yellow-500/20",
-    activeShadow: "shadow-[0_0_30px_rgba(234,179,8,0.3)]",
-    activeText: "text-yellow-400",
+    activeColor: "border-yellow-500", activeBg: "bg-yellow-500/20",
+    activeShadow: "shadow-[0_0_30px_rgba(234,179,8,0.3)]", activeText: "text-yellow-400",
   },
   {
-    key: "upgradedEngine",
-    label: "Upgraded Engine",
-    description: "35% faster top speed",
+    key: "upgradedEngine", label: "Upgraded Engine", description: "35% faster top speed",
     icon: <Gauge className="w-7 h-7 text-white" />,
-    activeColor: "border-purple-500",
-    activeBg: "bg-purple-500/20",
-    activeShadow: "shadow-[0_0_30px_rgba(168,85,247,0.3)]",
-    activeText: "text-purple-400",
+    activeColor: "border-purple-500", activeBg: "bg-purple-500/20",
+    activeShadow: "shadow-[0_0_30px_rgba(168,85,247,0.3)]", activeText: "text-purple-400",
   },
 ];
+
+const DECAL_ICONS: Record<string, React.ReactNode> = {
+  flames: <Flame className="w-7 h-7 text-white" />,
+  racing_stripes: <span className="text-2xl">║</span>,
+  stars: <span className="text-2xl">★</span>,
+  lightning: <Zap className="w-7 h-7 text-white" />,
+  flag: <span className="text-2xl">🏁</span>,
+  checker: <span className="text-2xl">▦</span>,
+};
 
 export default function Garage({ onStart, onCancel, midRace }: GarageProps) {
   const [upgrades, setUpgrades] = useState<CarUpgrades>({ ...DEFAULT_UPGRADES });
   const [tab, setTab] = useState<GarageTab>("upgrades");
 
   const toggle = (key: keyof CarUpgrades) => {
-    if (key === "bodyStyle" || key === "paintColor") return;
+    if (key === "bodyStyle" || key === "paintColor" || key === "decal" || key === "decalColor") return;
     setUpgrades((u) => ({ ...u, [key]: !u[key] }));
   };
 
   const TABS: { key: GarageTab; label: string; icon: React.ReactNode }[] = [
     { key: "upgrades", label: "Upgrades", icon: <Wrench className="w-5 h-5" /> },
     { key: "body", label: "Body", icon: <Car className="w-5 h-5" /> },
+    { key: "decals", label: "Decals", icon: <Sticker className="w-5 h-5" /> },
     { key: "paint", label: "Paint", icon: <Paintbrush className="w-5 h-5" /> },
   ];
 
@@ -121,7 +107,7 @@ export default function Garage({ onStart, onCancel, midRace }: GarageProps) {
         ))}
       </div>
 
-      {/* Tab content */}
+      {/* Upgrades tab */}
       {tab === "upgrades" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-80 sm:w-[40rem]">
           {UPGRADE_ITEMS.map((item) => {
@@ -136,11 +122,7 @@ export default function Garage({ onStart, onCancel, midRace }: GarageProps) {
                     : "border-white/20 bg-white/5 hover:border-white/40"
                 }`}
               >
-                <div
-                  className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${
-                    equipped ? item.activeBg : "bg-white/10"
-                  }`}
-                >
+                <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${equipped ? item.activeBg : "bg-white/10"}`}>
                   {item.icon}
                 </div>
                 <div className="text-left">
@@ -148,9 +130,7 @@ export default function Garage({ onStart, onCancel, midRace }: GarageProps) {
                   <div className="text-white/50 text-sm">{item.description}</div>
                 </div>
                 {equipped && (
-                  <div className={`absolute top-2 right-3 font-bold text-xs ${item.activeText}`}>
-                    EQUIPPED
-                  </div>
+                  <div className={`absolute top-2 right-3 font-bold text-xs ${item.activeText}`}>EQUIPPED</div>
                 )}
               </button>
             );
@@ -158,6 +138,7 @@ export default function Garage({ onStart, onCancel, midRace }: GarageProps) {
         </div>
       )}
 
+      {/* Body tab */}
       {tab === "body" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-80 sm:w-[40rem]">
           {BODY_STYLES.map((body) => {
@@ -180,9 +161,7 @@ export default function Garage({ onStart, onCancel, midRace }: GarageProps) {
                   <div className="text-white/50 text-sm">{body.description}</div>
                 </div>
                 {selected && (
-                  <div className="absolute top-2 right-3 font-bold text-xs text-blue-400">
-                    SELECTED
-                  </div>
+                  <div className="absolute top-2 right-3 font-bold text-xs text-blue-400">SELECTED</div>
                 )}
               </button>
             );
@@ -190,6 +169,66 @@ export default function Garage({ onStart, onCancel, midRace }: GarageProps) {
         </div>
       )}
 
+      {/* Decals tab */}
+      {tab === "decals" && (
+        <div className="flex flex-col items-center gap-6 w-80 sm:w-[40rem]">
+          {/* Decal selection */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+            {DECAL_OPTIONS.map((d) => {
+              const selected = upgrades.decal === d.key;
+              return (
+                <button
+                  key={d.key ?? "none"}
+                  onClick={() => setUpgrades((u) => ({ ...u, decal: d.key }))}
+                  className={`relative flex items-center gap-4 p-5 rounded-2xl border-2 transition-all duration-200 ${
+                    selected
+                      ? "border-pink-500 bg-pink-500/20 shadow-[0_0_30px_rgba(236,72,153,0.3)]"
+                      : "border-white/20 bg-white/5 hover:border-white/40"
+                  }`}
+                >
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 text-white ${selected ? "bg-pink-500/20" : "bg-white/10"}`}>
+                    {d.key ? DECAL_ICONS[d.key] || <Sticker className="w-7 h-7" /> : <span className="text-2xl">✕</span>}
+                  </div>
+                  <div className="text-left">
+                    <div className="text-white font-bold text-lg">{d.label}</div>
+                    <div className="text-white/50 text-sm">{d.description}</div>
+                  </div>
+                  {selected && (
+                    <div className="absolute top-2 right-3 font-bold text-xs text-pink-400">SELECTED</div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Decal color picker — only show when a decal is selected */}
+          {upgrades.decal && (
+            <div className="flex flex-col items-center gap-3 mt-2">
+              <div className="text-white/70 font-bold text-sm uppercase tracking-wider">Decal Color</div>
+              <div className="grid grid-cols-5 gap-3">
+                {PAINT_COLORS.map((p) => {
+                  const selected = upgrades.decalColor === p.color;
+                  return (
+                    <button
+                      key={p.color}
+                      onClick={() => setUpgrades((u) => ({ ...u, decalColor: p.color }))}
+                      className={`w-14 h-14 rounded-2xl border-4 transition-all duration-200 ${
+                        selected
+                          ? "border-white scale-110 shadow-[0_0_20px_rgba(255,255,255,0.4)]"
+                          : "border-white/20 hover:border-white/50 hover:scale-105"
+                      }`}
+                      style={{ backgroundColor: p.color }}
+                      title={p.label}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Paint tab */}
       {tab === "paint" && (
         <div className="flex flex-col items-center gap-6 w-80 sm:w-[40rem]">
           <div className="grid grid-cols-5 gap-3">
@@ -210,12 +249,8 @@ export default function Garage({ onStart, onCancel, midRace }: GarageProps) {
               );
             })}
           </div>
-          {/* Preview */}
           <div className="flex items-center gap-3">
-            <div
-              className="w-20 h-10 rounded-xl border-2 border-white/30"
-              style={{ backgroundColor: upgrades.paintColor }}
-            />
+            <div className="w-20 h-10 rounded-xl border-2 border-white/30" style={{ backgroundColor: upgrades.paintColor }} />
             <span className="text-white/70 font-medium">
               {PAINT_COLORS.find((p) => p.color === upgrades.paintColor)?.label ?? "Custom"}
             </span>
@@ -225,10 +260,7 @@ export default function Garage({ onStart, onCancel, midRace }: GarageProps) {
 
       <div className="flex gap-4 mt-4">
         {midRace && onCancel && (
-          <button
-            onClick={onCancel}
-            className="bg-gray-700 hover:bg-gray-600 text-white font-black text-xl px-10 py-4 rounded-2xl transition-colors"
-          >
+          <button onClick={onCancel} className="bg-gray-700 hover:bg-gray-600 text-white font-black text-xl px-10 py-4 rounded-2xl transition-colors">
             ✕ Back to Race
           </button>
         )}
