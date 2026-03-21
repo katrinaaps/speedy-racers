@@ -41,6 +41,8 @@ export interface CarUpgrades {
   upgradedEngine: boolean;
   bodyStyle: BodyStyle;
   paintColor: PaintColor;
+  decal: DecalType;
+  decalColor: string;
 }
 
 export const DEFAULT_UPGRADES: CarUpgrades = {
