@@ -4,6 +4,7 @@ import * as THREE from "three";
 import Track from "./Track";
 import Car from "./Car";
 import Spectators from "./Spectators";
+import Neighborhood from "./Neighborhood";
 import Obstacles, { generateObstacles, checkObstacleCollision } from "./Obstacles";
 import { CarState, getTrackPosition, getTrackTangent, TRACK_A, TRACK_B, LANE_WIDTH } from "./useGameState";
 import {
@@ -280,7 +281,7 @@ export default function GameScene({
     dirPos: [number,number,number]; fogColor: string; fogNear: number; fogFar: number; skyColor: string;
     hemiSky: string; hemiGround: string; hemiIntensity: number;
   }> = {
-    1: { ambient: 0.7, dirColor: "#ffffff", dirIntensity: 1.2, dirPos: [50,60,25], fogColor: "#87ceeb", fogNear: 150, fogFar: 350, skyColor: "#87ceeb", hemiSky: "#aaccff", hemiGround: "#2d5a1e", hemiIntensity: 0.4 },
+    1: { ambient: 0.9, dirColor: "#ffffff", dirIntensity: 1.5, dirPos: [50,60,25], fogColor: "#87ceeb", fogNear: 180, fogFar: 400, skyColor: "#87ceeb", hemiSky: "#bbddff", hemiGround: "#3a7a2a", hemiIntensity: 0.6 },
     2: { ambient: 0.4, dirColor: "#ff9944", dirIntensity: 0.9, dirPos: [20,20,40], fogColor: "#c47a3a", fogNear: 60, fogFar: 200, skyColor: "#d4764e", hemiSky: "#ff8844", hemiGround: "#553322", hemiIntensity: 0.4 },
     3: { ambient: 0.12, dirColor: "#8899cc", dirIntensity: 0.35, dirPos: [30,40,20], fogColor: "#111122", fogNear: 80, fogFar: 250, skyColor: "#0a0a1a", hemiSky: "#223355", hemiGround: "#111111", hemiIntensity: 0.25 },
   };
@@ -302,6 +303,7 @@ export default function GameScene({
       )}
       <Track level={level} />
       <Spectators level={level} />
+      <Neighborhood />
       <Obstacles obstacles={obstacles} />
       <Car carRef={playerRef} />
       <Car carRef={ai1Ref} />
