@@ -316,7 +316,8 @@ export default function Car({ carRef }: CarProps) {
     const [x, y, z] = getTrackPosition(car.angle, car.lane, car.flyHeight);
     const rot = getTrackTangent(car.angle, car.lane);
     meshRef.current.position.set(x, y, z);
-    meshRef.current.rotation.y = rot + Math.PI;
+    // Add spin rotation when spinning out
+    meshRef.current.rotation.y = rot + Math.PI + (car.spinRotation || 0);
   });
 
   const car = carRef.current;

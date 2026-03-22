@@ -147,7 +147,21 @@ export default function HUD({
                 keyHint="L"
               />
             )}
-            {player.wheelDamaged && (
+            {player.isSpinningOut && (
+              <div className="bg-red-900/80 backdrop-blur-sm rounded-xl px-4 py-3 w-44 text-center animate-pulse">
+                <div className="text-red-300 text-lg font-black">🌀 SPINNING OUT!</div>
+              </div>
+            )}
+            {player.inPitStop && (
+              <div className="bg-yellow-900/80 backdrop-blur-sm rounded-xl px-4 py-3 w-44 text-center">
+                <div className="text-yellow-300 text-sm font-bold">🔧 PIT STOP</div>
+                <div className="text-white text-xs">Repairing... {Math.ceil(player.pitStopTimer / 60)}s</div>
+                <div className="w-full bg-gray-700 rounded-full h-2 mt-1">
+                  <div className="bg-yellow-400 h-2 rounded-full transition-all" style={{ width: `${(player.pitStopTimer / PIT_STOP_DURATION) * 100}%` }} />
+                </div>
+              </div>
+            )}
+            {player.wheelDamaged && !player.isSpinningOut && !player.inPitStop && (
               <div className="bg-red-900/60 backdrop-blur-sm rounded-xl px-4 py-2 w-36">
                 <div className="text-red-400 text-xs font-bold">⚠️ WHEELS DAMAGED</div>
                 <div className="text-white/50 text-xs">Steering impaired!</div>
