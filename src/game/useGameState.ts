@@ -78,6 +78,7 @@ function makeCarState(overrides: Partial<CarState>): CarState {
     hasLaser: false, laserCooldown: 0, laserFiring: false,
     wheelDamaged: false, wheelDamageTimer: 0,
     hasUpgradedEngine: false,
+    isSpinningOut: false, spinOutTimer: 0, inPitStop: false, pitStopTimer: 0, spinRotation: 0,
     ...overrides,
   };
 }
