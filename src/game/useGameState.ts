@@ -40,6 +40,12 @@ export interface CarState {
   wheelDamageTimer: number;
   // Upgraded Engine
   hasUpgradedEngine: boolean;
+  // Pit stop (spin out → repair)
+  isSpinningOut: boolean;
+  spinOutTimer: number;
+  inPitStop: boolean;
+  pitStopTimer: number;
+  spinRotation: number;
 }
 
 const LAPS_PER_LEVEL: Record<number, number> = { 1: 50, 2: 100, 3: 300 };
