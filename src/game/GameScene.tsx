@@ -4,6 +4,7 @@ import * as THREE from "three";
 import Track from "./Track";
 import Car from "./Car";
 import Spectators from "./Spectators";
+import Neighborhood from "./Neighborhood";
 import Obstacles, { generateObstacles, checkObstacleCollision } from "./Obstacles";
 import { CarState, getTrackPosition, getTrackTangent, TRACK_A, TRACK_B, LANE_WIDTH } from "./useGameState";
 import {
