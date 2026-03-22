@@ -40,6 +40,12 @@ export interface CarState {
   wheelDamageTimer: number;
   // Upgraded Engine
   hasUpgradedEngine: boolean;
+  // Pit stop (spin out → repair)
+  isSpinningOut: boolean;
+  spinOutTimer: number;
+  inPitStop: boolean;
+  pitStopTimer: number;
+  spinRotation: number;
 }
 
 const LAPS_PER_LEVEL: Record<number, number> = { 1: 50, 2: 100, 3: 300 };
@@ -72,6 +78,7 @@ function makeCarState(overrides: Partial<CarState>): CarState {
     hasLaser: false, laserCooldown: 0, laserFiring: false,
     wheelDamaged: false, wheelDamageTimer: 0,
     hasUpgradedEngine: false,
+    isSpinningOut: false, spinOutTimer: 0, inPitStop: false, pitStopTimer: 0, spinRotation: 0,
     ...overrides,
   };
 }

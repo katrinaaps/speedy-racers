@@ -80,6 +80,8 @@ export const BIG_WHEELS_STEER_MULT = 1.8;
 export const LASER_COOLDOWN = 300; // frames (~5 seconds)
 export const LASER_RANGE = 0.8; // angle range to hit
 export const LASER_WHEEL_DAMAGE_DURATION = 360; // frames (~6 seconds) of impaired steering
+export const PIT_STOP_DURATION = 240; // frames (~4 seconds)
+export const SPIN_OUT_DURATION = 60; // frames (~1 second) spin animation before pit
 
 // Upgraded Engine config
 export const ENGINE_SPEED_MULT = 1.35; // 35% faster top speed
