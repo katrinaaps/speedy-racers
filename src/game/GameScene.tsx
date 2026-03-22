@@ -303,6 +303,7 @@ export default function GameScene({
       )}
       <Track level={level} />
       <Spectators level={level} />
+      <Neighborhood />
       <Obstacles obstacles={obstacles} />
       <Car carRef={playerRef} />
       <Car carRef={ai1Ref} />
