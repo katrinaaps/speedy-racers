@@ -1,4 +1,4 @@
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useCallback } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import Track from "./Track";
@@ -35,15 +35,23 @@ const PLAYER_ACCEL = 0.0009;
 const PLAYER_BRAKE = 0.0015;
 const PLAYER_FRICTION = 0.00015;
 const STEER_SPEED = 0.03;
-const DAMAGED_STEER_MULT = 0.3; // steering when wheels are damaged
+const DAMAGED_STEER_MULT = 0.3;
 const AI1_SPEED = 0.018;
 const AI2_SPEED = 0.020;
+
+function triggerSpinOut(car: CarState) {
+  if (car.isSpinningOut || car.inPitStop) return;
+  car.isSpinningOut = true;
+  car.spinOutTimer = SPIN_OUT_DURATION;
+  car.wheelDamaged = true;
+}
 
 export default function GameScene({
   phase, playerRef, ai1Ref, ai2Ref, keysRef, onLapUpdate, onWin, totalLaps, level,
 }: GameSceneProps) {
   const { camera } = useThree();
   const obstacles = useMemo(() => generateObstacles(level), [level]);
+
   const checkLap = (car: CarState) => {
     const crossed = car.angle >= Math.PI * 2;
     if (crossed && !car.lastCrossed) {
@@ -60,6 +68,45 @@ export default function GameScene({
     }
   };
 
+  const updateCamera = (p: CarState) => {
+    const [px, py, pz] = getTrackPosition(p.angle, p.lane, p.flyHeight);
+    const rot = getTrackTangent(p.angle, p.lane);
+    const camDist = 15;
+    const camHeight = 8;
+    const camX = px - Math.sin(rot) * camDist;
+    const camZ = pz - Math.cos(rot) * camDist;
+    camera.position.lerp(new THREE.Vector3(camX, py + camHeight, camZ), 0.05);
+    camera.lookAt(px, py + 1, pz);
+  };
+
+  const updateSpinPit = (car: CarState, dt: number): boolean => {
+    if (car.isSpinningOut) {
+      car.spinOutTimer -= dt;
+      car.spinRotation += 0.3 * dt;
+      car.speed = Math.max(0, car.speed - 0.003 * dt);
+      car.angle += car.speed * dt;
+      if (car.spinOutTimer <= 0) {
+        car.isSpinningOut = false;
+        car.inPitStop = true;
+        car.pitStopTimer = PIT_STOP_DURATION;
+        car.speed = 0;
+        car.spinRotation = 0;
+      }
+      return true;
+    }
+    if (car.inPitStop) {
+      car.pitStopTimer -= dt;
+      car.speed = 0;
+      if (car.pitStopTimer <= 0) {
+        car.inPitStop = false;
+        car.wheelDamaged = false;
+        car.wheelDamageTimer = 0;
+      }
+      return true;
+    }
+    return false;
+  };
+
   useFrame((_, delta) => {
     if (phase !== "racing") return;
     const clampedDelta = Math.min(delta, 0.05);
@@ -67,6 +114,103 @@ export default function GameScene({
 
     const p = playerRef.current;
     const k = keysRef.current;
+    const allCars = [playerRef.current, ai1Ref.current, ai2Ref.current];
+
+    // --- AI UPDATE FUNCTION ---
+    const updateAICar = (car: CarState, baseSpeed: number, variationFn: () => number) => {
+      // Check spin/pit first
+      if (updateSpinPit(car, dt)) {
+        checkLap(car);
+        return;
+      }
+
+      const variation = variationFn();
+      let aiMaxSpeed = baseSpeed * variation;
+      if (car.hasUpgradedEngine) aiMaxSpeed *= ENGINE_SPEED_MULT;
+      car.speed = aiMaxSpeed;
+
+      // AI wheel damage tick
+      if (car.wheelDamaged) {
+        car.wheelDamageTimer -= dt;
+        car.speed *= 0.6;
+        if (car.wheelDamageTimer <= 0) {
+          car.wheelDamaged = false;
+          car.wheelDamageTimer = 0;
+        }
+      }
+
+      // AI boost logic
+      if (car.boostCooldown > 0) car.boostCooldown -= dt;
+      if (car.hasRockets && !car.boostActive && car.boostCooldown <= 0 && Math.random() < 0.005) {
+        car.boostActive = true;
+        car.boostTimer = BOOST_DURATION;
+      }
+      let aiSpeedMult = 1;
+      if (car.boostActive) {
+        car.boostTimer -= dt;
+        aiSpeedMult = BOOST_MULTIPLIER;
+        if (car.boostTimer <= 0) {
+          car.boostActive = false;
+          car.boostCooldown = BOOST_COOLDOWN;
+        }
+      }
+
+      // AI wings logic
+      if (car.wingsCooldown > 0) car.wingsCooldown -= dt;
+      if (car.hasWings && !car.wingsActive && car.wingsCooldown <= 0 && Math.random() < 0.003) {
+        car.wingsActive = true;
+        car.wingsTimer = WINGS_DURATION;
+      }
+      if (car.wingsActive) {
+        car.wingsTimer -= dt;
+        const progress = 1 - car.wingsTimer / WINGS_DURATION;
+        car.flyHeight = Math.sin(progress * Math.PI) * WINGS_HEIGHT;
+        if (car.wingsTimer <= 0) {
+          car.wingsActive = false;
+          car.flyHeight = 0;
+          car.wingsCooldown = WINGS_COOLDOWN;
+        }
+      } else {
+        car.flyHeight = Math.max(0, car.flyHeight - 0.3 * dt);
+      }
+
+      // AI laser: randomly shoot at other cars
+      if (car.laserCooldown > 0) car.laserCooldown -= dt;
+      car.laserFiring = false;
+      if (car.hasLaser && car.laserCooldown <= 0 && Math.random() < 0.003) {
+        car.laserFiring = true;
+        car.laserCooldown = LASER_COOLDOWN;
+        for (const target of allCars) {
+          if (target === car) continue;
+          const angleDiff = Math.abs(car.angle - target.angle) % (Math.PI * 2);
+          const laneDiff = Math.abs(car.lane - target.lane);
+          if (angleDiff < LASER_RANGE && laneDiff < 2) {
+            triggerSpinOut(target);
+          }
+        }
+      }
+
+      // AI big wheels
+      if (car.hasBigWheels) {
+        car.lane = 1 + Math.sin(car.angle * 1.5) * 0.3 * BIG_WHEELS_STEER_MULT * 0.3;
+      }
+
+      car.angle += car.speed * dt * aiSpeedMult;
+      checkLap(car);
+    };
+
+    const updateAllAI = () => {
+      updateAICar(ai1Ref.current, AI1_SPEED, () => 1 + Math.sin(ai1Ref.current.angle * 3) * 0.15);
+      updateAICar(ai2Ref.current, AI2_SPEED, () => 1 + Math.cos(ai2Ref.current.angle * 2.5) * 0.12);
+    };
+
+    // === PLAYER SPIN/PIT CHECK ===
+    if (updateSpinPit(p, dt)) {
+      checkLap(p);
+      updateAllAI();
+      updateCamera(p);
+      return;
+    }
 
     // Upgraded Engine: higher max speed
     const maxSpeed = p.hasUpgradedEngine ? PLAYER_MAX_SPEED * ENGINE_SPEED_MULT : PLAYER_MAX_SPEED;
@@ -117,7 +261,6 @@ export default function GameScene({
     if (p.wingsActive) {
       p.wingsTimer -= dt;
       const progress = 1 - p.wingsTimer / WINGS_DURATION;
-      // Arc: go up then come down
       p.flyHeight = Math.sin(progress * Math.PI) * WINGS_HEIGHT;
       if (p.wingsTimer <= 0) {
         p.wingsActive = false;
@@ -125,7 +268,7 @@ export default function GameScene({
         p.wingsCooldown = WINGS_COOLDOWN;
       }
     } else {
-      p.flyHeight = Math.max(0, p.flyHeight - 0.3 * dt); // safety descent
+      p.flyHeight = Math.max(0, p.flyHeight - 0.3 * dt);
     }
 
     // === WHEEL DAMAGE ===
@@ -143,14 +286,12 @@ export default function GameScene({
     if (p.hasLaser && k.laser && p.laserCooldown <= 0) {
       p.laserFiring = true;
       p.laserCooldown = LASER_COOLDOWN;
-      // Check if laser hits AI cars
       const targets = [ai1Ref.current, ai2Ref.current];
       for (const target of targets) {
         const angleDiff = Math.abs(p.angle - target.angle) % (Math.PI * 2);
         const laneDiff = Math.abs(p.lane - target.lane);
         if (angleDiff < LASER_RANGE && laneDiff < 2) {
-          target.wheelDamaged = true;
-          target.wheelDamageTimer = LASER_WHEEL_DAMAGE_DURATION;
+          triggerSpinOut(target);
         }
       }
     }
@@ -170,112 +311,18 @@ export default function GameScene({
     const laneScale = baseCircum / circumApprox;
 
     p.angle += p.speed * dt * laneScale * speedMult;
-    
-    // Obstacle collision - slow car down on hit
+
+    // Obstacle collision
     if (checkObstacleCollision(p.angle, p.lane, p.flyHeight, obstacles)) {
-      p.speed *= 0.3; // big slowdown on hit
+      p.speed *= 0.3;
     }
-    
+
     checkLap(p);
-
-    // AI helper: update upgrades for AI cars
-    const allCars = [playerRef.current, ai1Ref.current, ai2Ref.current];
-    const updateAICar = (car: CarState, baseSpeed: number, variationFn: () => number) => {
-      const variation = variationFn();
-      let aiMaxSpeed = baseSpeed * variation;
-      if (car.hasUpgradedEngine) aiMaxSpeed *= ENGINE_SPEED_MULT;
-      car.speed = aiMaxSpeed;
-
-      // AI wheel damage tick
-      if (car.wheelDamaged) {
-        car.wheelDamageTimer -= dt;
-        car.speed *= 0.6; // damaged wheels slow AI down
-        if (car.wheelDamageTimer <= 0) {
-          car.wheelDamaged = false;
-          car.wheelDamageTimer = 0;
-        }
-      }
-
-      // AI boost logic
-      if (car.boostCooldown > 0) car.boostCooldown -= dt;
-      if (car.hasRockets && !car.boostActive && car.boostCooldown <= 0 && Math.random() < 0.005) {
-        car.boostActive = true;
-        car.boostTimer = BOOST_DURATION;
-      }
-      let aiSpeedMult = 1;
-      if (car.boostActive) {
-        car.boostTimer -= dt;
-        aiSpeedMult = BOOST_MULTIPLIER;
-        if (car.boostTimer <= 0) {
-          car.boostActive = false;
-          car.boostCooldown = BOOST_COOLDOWN;
-        }
-      }
-
-      // AI wings logic
-      if (car.wingsCooldown > 0) car.wingsCooldown -= dt;
-      if (car.hasWings && !car.wingsActive && car.wingsCooldown <= 0 && Math.random() < 0.003) {
-        car.wingsActive = true;
-        car.wingsTimer = WINGS_DURATION;
-      }
-      if (car.wingsActive) {
-        car.wingsTimer -= dt;
-        const progress = 1 - car.wingsTimer / WINGS_DURATION;
-        car.flyHeight = Math.sin(progress * Math.PI) * WINGS_HEIGHT;
-        if (car.wingsTimer <= 0) {
-          car.wingsActive = false;
-          car.flyHeight = 0;
-          car.wingsCooldown = WINGS_COOLDOWN;
-        }
-      } else {
-        car.flyHeight = Math.max(0, car.flyHeight - 0.3 * dt);
-      }
-
-      // AI laser: randomly shoot at player
-      if (car.laserCooldown > 0) car.laserCooldown -= dt;
-      car.laserFiring = false;
-      if (car.hasLaser && car.laserCooldown <= 0 && Math.random() < 0.003) {
-        car.laserFiring = true;
-        car.laserCooldown = LASER_COOLDOWN;
-        // Check hit on other cars
-        for (const target of allCars) {
-          if (target === car) continue;
-          const angleDiff = Math.abs(car.angle - target.angle) % (Math.PI * 2);
-          const laneDiff = Math.abs(car.lane - target.lane);
-          if (angleDiff < LASER_RANGE && laneDiff < 2) {
-            target.wheelDamaged = true;
-            target.wheelDamageTimer = LASER_WHEEL_DAMAGE_DURATION;
-          }
-        }
-      }
-
-      // AI big wheels: slightly better lane changes
-      if (car.hasBigWheels) {
-        car.lane = 1 + Math.sin(car.angle * 1.5) * 0.3 * BIG_WHEELS_STEER_MULT * 0.3;
-      }
-
-      car.angle += car.speed * dt * aiSpeedMult;
-      checkLap(car);
-    };
-
-    // AI 1
-    updateAICar(ai1Ref.current, AI1_SPEED, () => 1 + Math.sin(ai1Ref.current.angle * 3) * 0.15);
-
-    // AI 2
-    updateAICar(ai2Ref.current, AI2_SPEED, () => 1 + Math.cos(ai2Ref.current.angle * 2.5) * 0.12);
-
-    // Camera follows player
-    const [px, py, pz] = getTrackPosition(p.angle, p.lane, p.flyHeight);
-    const rot = getTrackTangent(p.angle, p.lane);
-    const camDist = 15;
-    const camHeight = 8;
-    const camX = px - Math.sin(rot) * camDist;
-    const camZ = pz - Math.cos(rot) * camDist;
-    camera.position.lerp(new THREE.Vector3(camX, py + camHeight, camZ), 0.05);
-    camera.lookAt(px, py + 1, pz);
+    updateAllAI();
+    updateCamera(p);
   });
 
-  // Level themes: 1=summer day, 2=autumn sunset, 3=winter night
+  // Level themes
   const themes: Record<number, {
     ambient: number; dirColor: string; dirIntensity: number;
     dirPos: [number,number,number]; fogColor: string; fogNear: number; fogFar: number; skyColor: string;
@@ -294,7 +341,6 @@ export default function GameScene({
       <directionalLight position={th.dirPos} intensity={th.dirIntensity} color={th.dirColor} castShadow />
       <hemisphereLight args={[th.hemiSky, th.hemiGround, th.hemiIntensity]} />
       <fog attach="fog" args={[th.fogColor, th.fogNear, th.fogFar]} />
-      {/* Moon for winter night */}
       {level === 3 && (
         <mesh position={[60, 80, -40]}>
           <sphereGeometry args={[5, 16, 16]} />
