@@ -5,7 +5,11 @@ import { TRACK_A, TRACK_B, LANE_WIDTH } from "./useGameState";
 
 // ========== TREES ==========
 function Tree({ position }: { position: [number, number, number] }) {
-  const height = 2 + Math.random() * 2;
+  const { height, crownSize, crownColor } = useMemo(() => ({
+    height: 2 + Math.random() * 2,
+    crownSize: 1.2 + Math.random() * 0.5,
+    crownColor: Math.random() > 0.5 ? "#2d6b1e" : "#1e8a1e",
+  }), []);
   return (
     <group position={position}>
       <mesh position={[0, height / 2, 0]}>
@@ -13,8 +17,8 @@ function Tree({ position }: { position: [number, number, number] }) {
         <meshStandardMaterial color="#5a3a1a" />
       </mesh>
       <mesh position={[0, height + 0.8, 0]}>
-        <sphereGeometry args={[1.2 + Math.random() * 0.5, 8, 6]} />
-        <meshStandardMaterial color={Math.random() > 0.5 ? "#2d6b1e" : "#1e8a1e"} />
+        <sphereGeometry args={[crownSize, 8, 6]} />
+        <meshStandardMaterial color={crownColor} />
       </mesh>
       <mesh position={[0.3, height + 0.3, 0.3]}>
         <sphereGeometry args={[0.8, 6, 5]} />
