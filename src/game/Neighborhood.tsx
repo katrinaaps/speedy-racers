@@ -13,16 +13,12 @@ function Tree({ position }: { position: [number, number, number] }) {
   return (
     <group position={position}>
       <mesh position={[0, height / 2, 0]}>
-        <cylinderGeometry args={[0.12, 0.18, height, 6]} />
+        <cylinderGeometry args={[0.12, 0.18, height, 5]} />
         <meshStandardMaterial color="#5a3a1a" />
       </mesh>
       <mesh position={[0, height + 0.8, 0]}>
-        <sphereGeometry args={[crownSize, 8, 6]} />
+        <sphereGeometry args={[crownSize, 6, 5]} />
         <meshStandardMaterial color={crownColor} />
-      </mesh>
-      <mesh position={[0.3, height + 0.3, 0.3]}>
-        <sphereGeometry args={[0.8, 6, 5]} />
-        <meshStandardMaterial color="#3a8a2a" />
       </mesh>
     </group>
   );
@@ -33,43 +29,30 @@ function House({ position, rotY, color, roofColor, hasLight }: {
   position: [number, number, number]; rotY: number;
   color: string; roofColor: string; hasLight: boolean;
 }) {
-  const lightRef = useRef<THREE.PointLight>(null);
   const windowRef = useRef<THREE.Mesh>(null);
   const flickerRef = useRef(Math.random() * 100);
 
   useFrame((_, delta) => {
-    if (!hasLight) return;
+    if (!hasLight || !windowRef.current) return;
     flickerRef.current += delta;
     const on = Math.sin(flickerRef.current * 0.3) > -0.3;
-    if (lightRef.current) lightRef.current.intensity = on ? 2 : 0;
-    if (windowRef.current) {
-      (windowRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = on ? 0.8 : 0;
-    }
+    (windowRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = on ? 0.8 : 0;
   });
 
   return (
     <group position={position} rotation-y={rotY}>
-      {/* Main body */}
       <mesh position={[0, 1.8, 0]}>
         <boxGeometry args={[4, 3.6, 3.5]} />
         <meshStandardMaterial color={color} />
       </mesh>
-      {/* Roof */}
-      <mesh position={[0, 3.9, 0]} rotation-z={0}>
+      <mesh position={[0, 3.9, 0]}>
         <coneGeometry args={[3.2, 1.8, 4]} />
         <meshStandardMaterial color={roofColor} />
       </mesh>
-      {/* Door */}
       <mesh position={[0, 0.8, 1.76]}>
         <boxGeometry args={[0.7, 1.6, 0.05]} />
         <meshStandardMaterial color="#5a3520" />
       </mesh>
-      {/* Door knob */}
-      <mesh position={[0.2, 0.7, 1.79]}>
-        <sphereGeometry args={[0.05, 6, 6]} />
-        <meshStandardMaterial color="#ccaa00" metalness={0.8} />
-      </mesh>
-      {/* Windows */}
       {[[-1.2, 2.2, 1.76], [1.2, 2.2, 1.76]].map((pos, i) => (
         <mesh key={`win-${i}`} ref={i === 0 ? windowRef : undefined} position={pos as [number, number, number]}>
           <boxGeometry args={[0.8, 0.8, 0.06]} />
@@ -82,18 +65,6 @@ function House({ position, rotY, color, roofColor, hasLight }: {
           />
         </mesh>
       ))}
-      {/* Window frames */}
-      {[[-1.2, 2.2, 1.77], [1.2, 2.2, 1.77]].map((pos, i) => (
-        <group key={`wf-${i}`} position={pos as [number, number, number]}>
-          <mesh><boxGeometry args={[0.85, 0.05, 0.02]} /><meshStandardMaterial color="#ffffff" /></mesh>
-          <mesh><boxGeometry args={[0.05, 0.85, 0.02]} /><meshStandardMaterial color="#ffffff" /></mesh>
-        </group>
-      ))}
-      {/* Light inside */}
-      {hasLight && (
-        <pointLight ref={lightRef} position={[0, 2, 0.5]} intensity={2} color="#ffdd88" distance={8} />
-      )}
-      {/* Chimney */}
       <mesh position={[1.2, 4.5, -0.5]}>
         <boxGeometry args={[0.5, 1.2, 0.5]} />
         <meshStandardMaterial color="#884444" />
@@ -103,70 +74,54 @@ function House({ position, rotY, color, roofColor, hasLight }: {
 }
 
 // ========== STORE ==========
-function Store({ position, rotY, name, wallColor, signColor }: {
+function Store({ position, rotY, wallColor, signColor }: {
   position: [number, number, number]; rotY: number;
-  name: string; wallColor: string; signColor: string;
+  wallColor: string; signColor: string;
 }) {
   return (
     <group position={position} rotation-y={rotY}>
-      {/* Building */}
       <mesh position={[0, 2.2, 0]}>
         <boxGeometry args={[6, 4.4, 4]} />
         <meshStandardMaterial color={wallColor} />
       </mesh>
-      {/* Flat roof */}
       <mesh position={[0, 4.45, 0]}>
         <boxGeometry args={[6.3, 0.15, 4.3]} />
         <meshStandardMaterial color="#555555" />
       </mesh>
-      {/* Sign board */}
       <mesh position={[0, 3.8, 2.02]}>
         <boxGeometry args={[5, 0.8, 0.1]} />
         <meshStandardMaterial color={signColor} />
       </mesh>
-      {/* Sign text approximation - colored stripe */}
       <mesh position={[0, 3.8, 2.08]}>
         <boxGeometry args={[4.2, 0.4, 0.02]} />
         <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.3} />
       </mesh>
-      {/* Store front glass */}
       <mesh position={[0, 1.2, 2.02]}>
         <boxGeometry args={[4, 2.2, 0.05]} />
-        <meshStandardMaterial color="#aaddee" transparent opacity={0.5} metalness={0.6} roughness={0.1} />
+        <meshStandardMaterial color="#aaddee" transparent opacity={0.5} />
       </mesh>
-      {/* Door */}
       <mesh position={[0, 0.9, 2.04]}>
         <boxGeometry args={[1.2, 1.8, 0.06]} />
         <meshStandardMaterial color="#447799" transparent opacity={0.6} />
       </mesh>
-      {/* Awning */}
-      <mesh position={[0, 2.5, 2.8]} rotation-x={-0.3}>
-        <boxGeometry args={[5.5, 0.05, 1.2]} />
-        <meshStandardMaterial color={signColor} />
-      </mesh>
-      {/* Interior light glow */}
-      <pointLight position={[0, 2, 1]} intensity={1.5} color="#ffffee" distance={6} />
     </group>
   );
 }
 
 // ========== WALKING PERSON ==========
-function WalkingPerson({ pathCenter, pathRadius, pathRadiusB, speed, color, skinTone }: {
-  pathCenter: [number, number, number]; pathRadius: number; pathRadiusB: number;
-  speed: number; color: string; skinTone: string;
+function WalkingPerson({ pathRadius, pathRadiusB, speed, color, skinTone, startAngle }: {
+  pathRadius: number; pathRadiusB: number;
+  speed: number; color: string; skinTone: string; startAngle: number;
 }) {
   const groupRef = useRef<THREE.Group>(null);
-  const angleRef = useRef(Math.random() * Math.PI * 2);
-  const bobRef = useRef(0);
+  const angleRef = useRef(startAngle);
 
   useFrame((_, delta) => {
     if (!groupRef.current) return;
     angleRef.current += speed * delta;
-    bobRef.current += delta * 8;
-    const x = pathCenter[0] + Math.cos(angleRef.current) * pathRadius;
-    const z = pathCenter[2] + Math.sin(angleRef.current) * pathRadiusB;
-    const bob = Math.abs(Math.sin(bobRef.current)) * 0.08;
-    groupRef.current.position.set(x, bob, z);
+    const x = Math.cos(angleRef.current) * pathRadius;
+    const z = Math.sin(angleRef.current) * pathRadiusB;
+    groupRef.current.position.set(x, 0, z);
     const dx = -Math.sin(angleRef.current) * pathRadius;
     const dz = Math.cos(angleRef.current) * pathRadiusB;
     groupRef.current.rotation.y = Math.atan2(dx, dz);
@@ -174,28 +129,12 @@ function WalkingPerson({ pathCenter, pathRadius, pathRadiusB, speed, color, skin
 
   return (
     <group ref={groupRef}>
-      {/* Legs */}
-      {[-0.08, 0.08].map((x, i) => (
-        <mesh key={`leg-${i}`} position={[x, 0.4, 0]}>
-          <boxGeometry args={[0.12, 0.8, 0.12]} />
-          <meshStandardMaterial color="#333355" />
-        </mesh>
-      ))}
-      {/* Body */}
-      <mesh position={[0, 1.05, 0]}>
-        <boxGeometry args={[0.35, 0.6, 0.22]} />
+      <mesh position={[0, 0.7, 0]}>
+        <boxGeometry args={[0.3, 1.4, 0.2]} />
         <meshStandardMaterial color={color} />
       </mesh>
-      {/* Arms */}
-      {[-0.24, 0.24].map((x, i) => (
-        <mesh key={`arm-${i}`} position={[x, 1, 0]}>
-          <boxGeometry args={[0.1, 0.5, 0.1]} />
-          <meshStandardMaterial color={skinTone} />
-        </mesh>
-      ))}
-      {/* Head */}
       <mesh position={[0, 1.55, 0]}>
-        <sphereGeometry args={[0.15, 8, 8]} />
+        <sphereGeometry args={[0.15, 6, 6]} />
         <meshStandardMaterial color={skinTone} />
       </mesh>
     </group>
@@ -203,13 +142,11 @@ function WalkingPerson({ pathCenter, pathRadius, pathRadiusB, speed, color, skin
 }
 
 // ========== DOG ==========
-function Dog({ pathCenter, pathRadius, pathRadiusB, speed }: {
-  pathCenter: [number, number, number]; pathRadius: number; pathRadiusB: number; speed: number;
+function Dog({ pathRadius, pathRadiusB, speed, startAngle }: {
+  pathRadius: number; pathRadiusB: number; speed: number; startAngle: number;
 }) {
   const groupRef = useRef<THREE.Group>(null);
-  const angleRef = useRef(Math.random() * Math.PI * 2);
-  const tailRef = useRef<THREE.Mesh>(null);
-
+  const angleRef = useRef(startAngle);
   const dogColor = useMemo(() => {
     const colors = ["#8b6914", "#3a2a1a", "#f5deb3", "#666666", "#c0a060"];
     return colors[Math.floor(Math.random() * colors.length)];
@@ -218,52 +155,22 @@ function Dog({ pathCenter, pathRadius, pathRadiusB, speed }: {
   useFrame((_, delta) => {
     if (!groupRef.current) return;
     angleRef.current += speed * delta;
-    const x = pathCenter[0] + Math.cos(angleRef.current) * pathRadius;
-    const z = pathCenter[2] + Math.sin(angleRef.current) * pathRadiusB;
+    const x = Math.cos(angleRef.current) * pathRadius;
+    const z = Math.sin(angleRef.current) * pathRadiusB;
     groupRef.current.position.set(x, 0, z);
     const dx = -Math.sin(angleRef.current) * pathRadius;
     const dz = Math.cos(angleRef.current) * pathRadiusB;
     groupRef.current.rotation.y = Math.atan2(dx, dz);
-    // Wag tail
-    if (tailRef.current) {
-      tailRef.current.rotation.z = Math.sin(angleRef.current * 20) * 0.4;
-    }
   });
 
   return (
     <group ref={groupRef}>
-      {/* Body */}
       <mesh position={[0, 0.3, 0]}>
         <boxGeometry args={[0.25, 0.22, 0.6]} />
         <meshStandardMaterial color={dogColor} />
       </mesh>
-      {/* Head */}
       <mesh position={[0, 0.35, -0.35]}>
         <boxGeometry args={[0.2, 0.2, 0.2]} />
-        <meshStandardMaterial color={dogColor} />
-      </mesh>
-      {/* Snout */}
-      <mesh position={[0, 0.3, -0.48]}>
-        <boxGeometry args={[0.1, 0.08, 0.1]} />
-        <meshStandardMaterial color={dogColor} />
-      </mesh>
-      {/* Ears */}
-      {[-0.1, 0.1].map((x, i) => (
-        <mesh key={`ear-${i}`} position={[x, 0.47, -0.32]}>
-          <boxGeometry args={[0.06, 0.1, 0.04]} />
-          <meshStandardMaterial color={dogColor} />
-        </mesh>
-      ))}
-      {/* Legs */}
-      {[[-0.1, 0.1, 0.2], [0.1, 0.1, 0.2], [-0.1, 0.1, -0.2], [0.1, 0.1, -0.2]].map((pos, i) => (
-        <mesh key={`dleg-${i}`} position={pos as [number, number, number]}>
-          <boxGeometry args={[0.06, 0.2, 0.06]} />
-          <meshStandardMaterial color={dogColor} />
-        </mesh>
-      ))}
-      {/* Tail */}
-      <mesh ref={tailRef} position={[0, 0.4, 0.35]} rotation-x={-0.5}>
-        <boxGeometry args={[0.04, 0.04, 0.2]} />
         <meshStandardMaterial color={dogColor} />
       </mesh>
     </group>
@@ -277,7 +184,7 @@ function Sidewalk() {
     const outerDistB = TRACK_B + 18;
     const innerDist = TRACK_A + 20;
     const innerDistB = TRACK_B + 16;
-    const segments = 64;
+    const segments = 48;
     const s = new THREE.Shape();
     for (let i = 0; i <= segments; i++) {
       const t = (i / segments) * Math.PI * 2;
@@ -304,23 +211,18 @@ function Sidewalk() {
   );
 }
 
-// ========== STREETLAMP ==========
+// ========== STREETLAMP (no point light — just emissive glow) ==========
 function StreetLamp({ position }: { position: [number, number, number] }) {
   return (
     <group position={position}>
       <mesh position={[0, 2.5, 0]}>
-        <cylinderGeometry args={[0.06, 0.08, 5, 6]} />
+        <cylinderGeometry args={[0.06, 0.08, 5, 5]} />
         <meshStandardMaterial color="#444444" metalness={0.7} />
       </mesh>
-      <mesh position={[0, 5.1, 0]}>
-        <boxGeometry args={[0.4, 0.15, 0.4]} />
-        <meshStandardMaterial color="#555555" metalness={0.5} />
-      </mesh>
       <mesh position={[0, 5, 0]}>
-        <sphereGeometry args={[0.15, 6, 6]} />
-        <meshStandardMaterial color="#ffffcc" emissive="#ffeeaa" emissiveIntensity={0.6} />
+        <sphereGeometry args={[0.2, 6, 6]} />
+        <meshStandardMaterial color="#ffffcc" emissive="#ffeeaa" emissiveIntensity={1} />
       </mesh>
-      <pointLight position={[0, 4.8, 0]} intensity={1.5} color="#ffeeaa" distance={12} />
     </group>
   );
 }
@@ -330,7 +232,7 @@ export default function Neighborhood() {
   const HOUSE_COLORS = ["#cc9966", "#ddbbaa", "#aabb99", "#bbccdd", "#eeddcc", "#dda0a0", "#a0c0dd"];
   const ROOF_COLORS = ["#883333", "#555555", "#334455", "#664422", "#446633"];
   const SKIN_TONES = ["#f5d6b8", "#d4a574", "#8d5524", "#c68642", "#e0ac69"];
-  const SHIRT_COLORS = ["#e74c3c", "#3498db", "#2ecc71", "#f1c40f", "#9b59b6", "#ff6b6b", "#1abc9c"];
+  const SHIRT_COLORS = ["#e74c3c", "#3498db", "#2ecc71", "#f1c40f", "#9b59b6"];
 
   const houses = useMemo(() => {
     const h: Array<{
@@ -339,16 +241,14 @@ export default function Neighborhood() {
     }> = [];
     const houseRing = TRACK_A + 38;
     const houseRingB = TRACK_B + 32;
-    for (let i = 0; i < 14; i++) {
-      const angle = (i / 14) * Math.PI * 2 + 0.15;
-      const x = Math.cos(angle) * houseRing;
-      const z = Math.sin(angle) * houseRingB;
+    for (let i = 0; i < 10; i++) {
+      const angle = (i / 10) * Math.PI * 2 + 0.15;
       h.push({
-        pos: [x, 0, z],
+        pos: [Math.cos(angle) * houseRing, 0, Math.sin(angle) * houseRingB],
         rotY: -angle + Math.PI / 2,
         color: HOUSE_COLORS[i % HOUSE_COLORS.length],
         roofColor: ROOF_COLORS[i % ROOF_COLORS.length],
-        hasLight: Math.random() > 0.3,
+        hasLight: i % 3 === 0,
       });
     }
     return h;
@@ -375,15 +275,13 @@ export default function Neighborhood() {
 
   const trees = useMemo(() => {
     const t: Array<[number, number, number]> = [];
-    // Sidewalk trees
-    for (let i = 0; i < 24; i++) {
-      const angle = (i / 24) * Math.PI * 2 + Math.random() * 0.1;
+    for (let i = 0; i < 16; i++) {
+      const angle = (i / 16) * Math.PI * 2 + Math.random() * 0.1;
       const dist = TRACK_A + 21 + Math.random() * 2;
       const distB = TRACK_B + 17 + Math.random() * 2;
       t.push([Math.cos(angle) * dist, 0, Math.sin(angle) * distB]);
     }
-    // Yard trees
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 8; i++) {
       const angle = Math.random() * Math.PI * 2;
       const dist = TRACK_A + 33 + Math.random() * 8;
       const distB = TRACK_B + 27 + Math.random() * 8;
@@ -394,8 +292,8 @@ export default function Neighborhood() {
 
   const lamps = useMemo(() => {
     const l: Array<[number, number, number]> = [];
-    for (let i = 0; i < 16; i++) {
-      const angle = (i / 16) * Math.PI * 2;
+    for (let i = 0; i < 10; i++) {
+      const angle = (i / 10) * Math.PI * 2;
       const dist = TRACK_A + 19;
       const distB = TRACK_B + 15;
       l.push([Math.cos(angle) * dist, 0, Math.sin(angle) * distB]);
@@ -405,35 +303,30 @@ export default function Neighborhood() {
 
   const people = useMemo(() => {
     const p: Array<{
-      center: [number, number, number]; radius: number; radiusB: number;
-      speed: number; color: string; skin: string;
+      radius: number; radiusB: number;
+      speed: number; color: string; skin: string; startAngle: number;
     }> = [];
-    for (let i = 0; i < 10; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const dist = TRACK_A + 24 + Math.random() * 16;
-      const distB = TRACK_B + 20 + Math.random() * 14;
+    for (let i = 0; i < 6; i++) {
       p.push({
-        center: [0, 0, 0],
-        radius: dist,
-        radiusB: distB,
+        radius: TRACK_A + 24 + Math.random() * 16,
+        radiusB: TRACK_B + 20 + Math.random() * 14,
         speed: 0.15 + Math.random() * 0.25,
         color: SHIRT_COLORS[Math.floor(Math.random() * SHIRT_COLORS.length)],
         skin: SKIN_TONES[Math.floor(Math.random() * SKIN_TONES.length)],
+        startAngle: Math.random() * Math.PI * 2,
       });
     }
     return p;
   }, []);
 
   const dogs = useMemo(() => {
-    const d: Array<{ center: [number, number, number]; radius: number; radiusB: number; speed: number }> = [];
-    for (let i = 0; i < 5; i++) {
-      const dist = TRACK_A + 20 + Math.random() * 20;
-      const distB = TRACK_B + 16 + Math.random() * 18;
+    const d: Array<{ radius: number; radiusB: number; speed: number; startAngle: number }> = [];
+    for (let i = 0; i < 3; i++) {
       d.push({
-        center: [0, 0, 0],
-        radius: dist,
-        radiusB: distB,
+        radius: TRACK_A + 20 + Math.random() * 20,
+        radiusB: TRACK_B + 16 + Math.random() * 18,
         speed: 0.3 + Math.random() * 0.4,
+        startAngle: Math.random() * Math.PI * 2,
       });
     }
     return d;
@@ -450,16 +343,16 @@ export default function Neighborhood() {
       ))}
       {stores.map((s, i) => (
         <Store key={`store-${i}`} position={s.pos} rotY={s.rotY}
-          name={s.name} wallColor={s.wallColor} signColor={s.signColor} />
+          wallColor={s.wallColor} signColor={s.signColor} />
       ))}
       {people.map((p, i) => (
-        <WalkingPerson key={`wp-${i}`} pathCenter={p.center}
+        <WalkingPerson key={`wp-${i}`}
           pathRadius={p.radius} pathRadiusB={p.radiusB}
-          speed={p.speed} color={p.color} skinTone={p.skin} />
+          speed={p.speed} color={p.color} skinTone={p.skin} startAngle={p.startAngle} />
       ))}
       {dogs.map((d, i) => (
-        <Dog key={`dog-${i}`} pathCenter={d.center}
-          pathRadius={d.radius} pathRadiusB={d.radiusB} speed={d.speed} />
+        <Dog key={`dog-${i}`}
+          pathRadius={d.radius} pathRadiusB={d.radiusB} speed={d.speed} startAngle={d.startAngle} />
       ))}
     </group>
   );
