@@ -5,7 +5,7 @@ import HUD from "./HUD";
 import TouchControls from "./TouchControls";
 import Garage from "./Garage";
 import { useGameState } from "./useGameState";
-import { CarUpgrades } from "./carUpgrades";
+import { CarUpgrades, WheelType, PIT_STOP_DURATION } from "./carUpgrades";
 import { startEngine, stopEngine, updateEngineSound, playCrowdCheer, playCountdownBeep } from "./audioEngine";
 
 export default function RacingGame() {
@@ -49,6 +49,15 @@ export default function RacingGame() {
   const handleCloseMidRaceGarage = useCallback(() => {
     setMidRaceGarage(false);
   }, []);
+
+  const handleWheelSelect = useCallback((wheelType: WheelType) => {
+    const p = playerRef.current;
+    if (!p.awaitingWheelSelection) return;
+    p.wheelType = wheelType;
+    p.awaitingWheelSelection = false;
+    p.inPitStop = true;
+    p.pitStopTimer = PIT_STOP_DURATION;
+  }, [playerRef]);
 
   // Keyboard controls
   useEffect(() => {
@@ -199,6 +208,7 @@ export default function RacingGame() {
         onRestart={handleRestart}
         onGarage={handleBackToGarage}
         onMidRaceGarage={handleOpenMidRaceGarage}
+        onWheelSelect={handleWheelSelect}
         hudUpdate={hudUpdate}
         level={level}
         maxLevel={MAX_LEVEL}

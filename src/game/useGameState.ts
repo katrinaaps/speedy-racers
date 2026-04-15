@@ -38,6 +38,10 @@ export interface CarState {
   // Wheel damage (from being hit by laser)
   wheelDamaged: boolean;
   wheelDamageTimer: number;
+  // Wheel type
+  wheelType: "normal" | "big" | "bike" | "off-road" | "slick" | "spiked";
+  // Waiting for wheel selection (player only)
+  awaitingWheelSelection: boolean;
   // Upgraded Engine
   hasUpgradedEngine: boolean;
   // Pit stop (spin out → repair)
@@ -77,6 +81,7 @@ function makeCarState(overrides: Partial<CarState>): CarState {
     hasParachute: false, parachuteActive: false, parachuteTimer: 0, parachuteCooldown: 0,
     hasLaser: false, laserCooldown: 0, laserFiring: false,
     wheelDamaged: false, wheelDamageTimer: 0,
+    wheelType: "normal", awaitingWheelSelection: false,
     hasUpgradedEngine: false,
     isSpinningOut: false, spinOutTimer: 0, inPitStop: false, pitStopTimer: 0, spinRotation: 0,
     ...overrides,

@@ -1,5 +1,5 @@
 import { CarState } from "./useGameState";
-import { BOOST_COOLDOWN, BOOST_DURATION, WINGS_COOLDOWN, WINGS_DURATION, PARACHUTE_COOLDOWN, PARACHUTE_DURATION, LASER_COOLDOWN, PIT_STOP_DURATION, SPIN_OUT_DURATION } from "./carUpgrades";
+import { BOOST_COOLDOWN, BOOST_DURATION, WINGS_COOLDOWN, WINGS_DURATION, PARACHUTE_COOLDOWN, PARACHUTE_DURATION, LASER_COOLDOWN, PIT_STOP_DURATION, SPIN_OUT_DURATION, WHEEL_OPTIONS, WheelType } from "./carUpgrades";
 
 interface HUDProps {
   phase: "countdown" | "racing" | "finished";
@@ -12,6 +12,7 @@ interface HUDProps {
   onRestart: () => void;
   onGarage: () => void;
   onMidRaceGarage: () => void;
+  onWheelSelect: (wheelType: WheelType) => void;
   hudUpdate: number;
   level: number;
   maxLevel: number;
@@ -53,7 +54,7 @@ function AbilityIndicator({ label, emoji, active, ready, cooldownPct, timerPct, 
 }
 
 export default function HUD({
-  phase, countdown, winner, playerRef, ai1Ref, ai2Ref, totalLaps, onRestart, onGarage, onMidRaceGarage, hudUpdate,
+  phase, countdown, winner, playerRef, ai1Ref, ai2Ref, totalLaps, onRestart, onGarage, onMidRaceGarage, onWheelSelect, hudUpdate,
   level, maxLevel, onNextLevel,
 }: HUDProps) {
   const player = playerRef.current;
@@ -152,10 +153,35 @@ export default function HUD({
                 <div className="text-red-300 text-lg font-black">🌀 SPINNING OUT!</div>
               </div>
             )}
+            {player.awaitingWheelSelection && (
+              <div className="bg-black/90 backdrop-blur-md rounded-2xl px-6 py-4 w-72 text-center pointer-events-auto">
+                <div className="text-yellow-300 text-lg font-black mb-1">🛞 CHOOSE NEW WHEELS</div>
+                <div className="text-white/60 text-xs mb-3">Your wheels were destroyed! Pick a replacement:</div>
+                <div className="flex flex-col gap-2">
+                  {WHEEL_OPTIONS.map(opt => (
+                    <button
+                      key={opt.key}
+                      onClick={() => onWheelSelect(opt.key)}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors ${
+                        player.wheelType === opt.key
+                          ? "bg-yellow-600/50 border border-yellow-400"
+                          : "bg-white/10 hover:bg-white/20 border border-white/10"
+                      }`}
+                    >
+                      <span className="text-xl">{opt.emoji}</span>
+                      <div className="flex-1">
+                        <div className="text-white text-sm font-bold">{opt.label}</div>
+                        <div className="text-white/50 text-xs">{opt.description}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {player.inPitStop && (
               <div className="bg-yellow-900/80 backdrop-blur-sm rounded-xl px-4 py-3 w-44 text-center">
                 <div className="text-yellow-300 text-sm font-bold">🔧 PIT STOP</div>
-                <div className="text-white text-xs">Repairing... {Math.ceil(player.pitStopTimer / 60)}s</div>
+                <div className="text-white text-xs">Installing wheels... {Math.ceil(player.pitStopTimer / 60)}s</div>
                 <div className="w-full bg-gray-700 rounded-full h-2 mt-1">
                   <div className="bg-yellow-400 h-2 rounded-full transition-all" style={{ width: `${(player.pitStopTimer / PIT_STOP_DURATION) * 100}%` }} />
                 </div>
