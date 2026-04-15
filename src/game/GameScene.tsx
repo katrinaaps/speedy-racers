@@ -134,7 +134,7 @@ export default function GameScene({
     // --- AI UPDATE FUNCTION ---
     const updateAICar = (car: CarState, baseSpeed: number, variationFn: () => number) => {
       // Check spin/pit first
-      if (updateSpinPit(car, dt)) {
+      if (updateSpinPit(car, dt, false)) {
         checkLap(car);
         return;
       }
@@ -220,7 +220,7 @@ export default function GameScene({
     };
 
     // === PLAYER SPIN/PIT CHECK ===
-    if (updateSpinPit(p, dt)) {
+    if (updateSpinPit(p, dt, true)) {
       checkLap(p);
       updateAllAI();
       updateCamera(p);
