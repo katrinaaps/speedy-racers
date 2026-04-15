@@ -13,6 +13,7 @@ import {
   PARACHUTE_DURATION, PARACHUTE_COOLDOWN, PARACHUTE_BRAKE_FACTOR,
   BIG_WHEELS_STEER_MULT, LASER_COOLDOWN, LASER_RANGE,
   ENGINE_SPEED_MULT, PIT_STOP_DURATION, SPIN_OUT_DURATION,
+  WHEEL_OPTIONS, WheelType,
 } from "./carUpgrades";
 
 interface GameSceneProps {
@@ -40,11 +41,13 @@ const AI1_SPEED = 0.018;
 const AI2_SPEED = 0.020;
 
 function triggerSpinOut(car: CarState) {
-  if (car.isSpinningOut || car.inPitStop) return;
+  if (car.isSpinningOut || car.inPitStop || car.awaitingWheelSelection) return;
   car.isSpinningOut = true;
   car.spinOutTimer = SPIN_OUT_DURATION;
   car.wheelDamaged = true;
 }
+
+const AI_WHEEL_TYPES: WheelType[] = WHEEL_OPTIONS.map(o => o.key);
 
 export default function GameScene({
   phase, playerRef, ai1Ref, ai2Ref, keysRef, onLapUpdate, onWin, totalLaps, level,
@@ -79,7 +82,7 @@ export default function GameScene({
     camera.lookAt(px, py + 1, pz);
   };
 
-  const updateSpinPit = (car: CarState, dt: number): boolean => {
+  const updateSpinPit = (car: CarState, dt: number, isPlayer: boolean): boolean => {
     if (car.isSpinningOut) {
       car.spinOutTimer -= dt;
       car.spinRotation += 0.3 * dt;
@@ -87,11 +90,23 @@ export default function GameScene({
       car.angle += car.speed * dt;
       if (car.spinOutTimer <= 0) {
         car.isSpinningOut = false;
-        car.inPitStop = true;
-        car.pitStopTimer = PIT_STOP_DURATION;
         car.speed = 0;
         car.spinRotation = 0;
+        if (isPlayer) {
+          // Player must choose wheels
+          car.awaitingWheelSelection = true;
+        } else {
+          // AI auto-picks a random wheel type
+          const pick = AI_WHEEL_TYPES[Math.floor(Math.random() * AI_WHEEL_TYPES.length)];
+          car.wheelType = pick;
+          car.inPitStop = true;
+          car.pitStopTimer = PIT_STOP_DURATION;
+        }
       }
+      return true;
+    }
+    if (car.awaitingWheelSelection) {
+      car.speed = 0;
       return true;
     }
     if (car.inPitStop) {
