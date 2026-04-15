@@ -3,6 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { CarState, getTrackPosition, getTrackTangent } from "./useGameState";
 import CarDecals from "./CarDecals";
+import type { WheelType } from "./carUpgrades";
 
 interface CarProps {
   carRef: React.MutableRefObject<CarState>;
@@ -275,34 +276,173 @@ function FormulaBody({ color }: { color: string }) {
   );
 }
 
-function Wheel({ position, radius, width, damaged }: {
+function getWheelSize(wheelType: WheelType): { radius: number; width: number } {
+  switch (wheelType) {
+    case "big": return { radius: 0.55, width: 0.4 };
+    case "bike": return { radius: 0.42, width: 0.12 };
+    case "off-road": return { radius: 0.5, width: 0.45 };
+    case "slick": return { radius: 0.36, width: 0.32 };
+    case "spiked": return { radius: 0.42, width: 0.3 };
+    case "monster": return { radius: 0.75, width: 0.55 };
+    default: return { radius: 0.38, width: 0.28 };
+  }
+}
+
+function Wheel({ position, wheelType, damaged }: {
   position: [number, number, number];
-  radius: number;
-  width: number;
+  wheelType: WheelType;
   damaged: boolean;
 }) {
+  const { radius, width } = getWheelSize(wheelType);
+  const dmgColor = damaged ? "#ff3333" : undefined;
+  const dmgEmissive = damaged ? "#ff0000" : "#000000";
+  const dmgIntensity = damaged ? 0.4 : 0;
+
   return (
     <group position={position}>
-      {/* Tire */}
-      <mesh rotation-z={Math.PI / 2}>
-        <cylinderGeometry args={[radius, radius, width, 16]} />
-        <meshStandardMaterial
-          color={damaged ? "#ff3333" : "#1a1a1a"}
-          emissive={damaged ? "#ff0000" : "#000000"}
-          emissiveIntensity={damaged ? 0.4 : 0}
-          roughness={0.8}
-        />
-      </mesh>
-      {/* Rim */}
-      <mesh rotation-z={Math.PI / 2}>
-        <cylinderGeometry args={[radius * 0.55, radius * 0.55, width + 0.02, 12]} />
-        <meshStandardMaterial color="#aaaaaa" metalness={0.8} roughness={0.2} />
-      </mesh>
-      {/* Hub cap */}
-      <mesh position={[width / 2 + 0.01, 0, 0]} rotation-z={Math.PI / 2}>
-        <circleGeometry args={[radius * 0.3, 8]} />
-        <meshStandardMaterial color="#cccccc" metalness={0.9} roughness={0.1} side={THREE.DoubleSide} />
-      </mesh>
+      {/* Normal wheels */}
+      {wheelType === "normal" && (
+        <>
+          <mesh rotation-z={Math.PI / 2}>
+            <cylinderGeometry args={[radius, radius, width, 16]} />
+            <meshStandardMaterial color={dmgColor || "#1a1a1a"} emissive={dmgEmissive} emissiveIntensity={dmgIntensity} roughness={0.8} />
+          </mesh>
+          <mesh rotation-z={Math.PI / 2}>
+            <cylinderGeometry args={[radius * 0.55, radius * 0.55, width + 0.02, 12]} />
+            <meshStandardMaterial color="#aaaaaa" metalness={0.8} roughness={0.2} />
+          </mesh>
+        </>
+      )}
+
+      {/* Big wheels - chunky with chrome rims */}
+      {wheelType === "big" && (
+        <>
+          <mesh rotation-z={Math.PI / 2}>
+            <cylinderGeometry args={[radius, radius, width, 16]} />
+            <meshStandardMaterial color={dmgColor || "#222222"} emissive={dmgEmissive} emissiveIntensity={dmgIntensity} roughness={0.7} />
+          </mesh>
+          <mesh rotation-z={Math.PI / 2}>
+            <cylinderGeometry args={[radius * 0.6, radius * 0.6, width + 0.02, 12]} />
+            <meshStandardMaterial color="#dddddd" metalness={0.9} roughness={0.1} />
+          </mesh>
+          <mesh position={[width / 2 + 0.01, 0, 0]} rotation-z={Math.PI / 2}>
+            <circleGeometry args={[radius * 0.35, 8]} />
+            <meshStandardMaterial color="#ffcc00" metalness={0.9} roughness={0.1} side={THREE.DoubleSide} />
+          </mesh>
+        </>
+      )}
+
+      {/* Bike wheels - thin with spokes */}
+      {wheelType === "bike" && (
+        <>
+          <mesh rotation-z={Math.PI / 2}>
+            <torusGeometry args={[radius * 0.8, radius * 0.15, 8, 20]} />
+            <meshStandardMaterial color={dmgColor || "#111111"} emissive={dmgEmissive} emissiveIntensity={dmgIntensity} roughness={0.6} />
+          </mesh>
+          {/* Spokes */}
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <mesh key={`spoke-${i}`} rotation-z={Math.PI / 2} rotation-y={(Math.PI / 3) * i}>
+              <boxGeometry args={[0.02, radius * 1.5, 0.02]} />
+              <meshStandardMaterial color="#999999" metalness={0.8} roughness={0.2} />
+            </mesh>
+          ))}
+          <mesh rotation-z={Math.PI / 2}>
+            <cylinderGeometry args={[radius * 0.1, radius * 0.1, width + 0.01, 8]} />
+            <meshStandardMaterial color="#888888" metalness={0.9} roughness={0.1} />
+          </mesh>
+        </>
+      )}
+
+      {/* Off-road wheels - knobby tread */}
+      {wheelType === "off-road" && (
+        <>
+          <mesh rotation-z={Math.PI / 2}>
+            <cylinderGeometry args={[radius, radius, width, 12]} />
+            <meshStandardMaterial color={dmgColor || "#2a2a2a"} emissive={dmgEmissive} emissiveIntensity={dmgIntensity} roughness={0.95} />
+          </mesh>
+          {/* Tread knobs */}
+          {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
+            const a = (Math.PI * 2 / 8) * i;
+            return (
+              <mesh key={`knob-${i}`} position={[0, Math.cos(a) * radius * 0.9, Math.sin(a) * radius * 0.9]} rotation-z={Math.PI / 2}>
+                <boxGeometry args={[width * 0.9, 0.08, 0.12]} />
+                <meshStandardMaterial color={dmgColor || "#3a3a2a"} roughness={1} />
+              </mesh>
+            );
+          })}
+          <mesh rotation-z={Math.PI / 2}>
+            <cylinderGeometry args={[radius * 0.45, radius * 0.45, width + 0.02, 10]} />
+            <meshStandardMaterial color="#666655" metalness={0.5} roughness={0.5} />
+          </mesh>
+        </>
+      )}
+
+      {/* Slick wheels - smooth racing tires */}
+      {wheelType === "slick" && (
+        <>
+          <mesh rotation-z={Math.PI / 2}>
+            <cylinderGeometry args={[radius, radius, width, 24]} />
+            <meshStandardMaterial color={dmgColor || "#0a0a0a"} emissive={dmgEmissive} emissiveIntensity={dmgIntensity} roughness={0.1} metalness={0.3} />
+          </mesh>
+          <mesh rotation-z={Math.PI / 2}>
+            <cylinderGeometry args={[radius * 0.5, radius * 0.5, width + 0.02, 16]} />
+            <meshStandardMaterial color="#cc0000" metalness={0.7} roughness={0.2} />
+          </mesh>
+        </>
+      )}
+
+      {/* Spiked wheels - spikes protruding */}
+      {wheelType === "spiked" && (
+        <>
+          <mesh rotation-z={Math.PI / 2}>
+            <cylinderGeometry args={[radius, radius, width, 16]} />
+            <meshStandardMaterial color={dmgColor || "#1a1a1a"} emissive={dmgEmissive} emissiveIntensity={dmgIntensity} roughness={0.7} />
+          </mesh>
+          {/* Spikes */}
+          {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => {
+            const a = (Math.PI * 2 / 10) * i;
+            return (
+              <mesh key={`spike-${i}`} position={[0, Math.cos(a) * radius, Math.sin(a) * radius]}>
+                <coneGeometry args={[0.04, 0.15, 6]} />
+                <meshStandardMaterial color="#bbbbbb" metalness={0.9} roughness={0.1} />
+              </mesh>
+            );
+          })}
+          <mesh rotation-z={Math.PI / 2}>
+            <cylinderGeometry args={[radius * 0.5, radius * 0.5, width + 0.02, 12]} />
+            <meshStandardMaterial color="#777777" metalness={0.8} roughness={0.2} />
+          </mesh>
+        </>
+      )}
+
+      {/* Monster truck wheels - massive with deep tread */}
+      {wheelType === "monster" && (
+        <>
+          <mesh rotation-z={Math.PI / 2}>
+            <cylinderGeometry args={[radius, radius, width, 16]} />
+            <meshStandardMaterial color={dmgColor || "#1a1a1a"} emissive={dmgEmissive} emissiveIntensity={dmgIntensity} roughness={0.9} />
+          </mesh>
+          {/* Deep tread pattern */}
+          {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => {
+            const a = (Math.PI * 2 / 10) * i;
+            return (
+              <mesh key={`tread-${i}`} position={[0, Math.cos(a) * radius * 0.85, Math.sin(a) * radius * 0.85]} rotation-z={Math.PI / 2}>
+                <boxGeometry args={[width * 1.05, 0.12, 0.18]} />
+                <meshStandardMaterial color={dmgColor || "#2a2a2a"} roughness={1} />
+              </mesh>
+            );
+          })}
+          <mesh rotation-z={Math.PI / 2}>
+            <cylinderGeometry args={[radius * 0.4, radius * 0.4, width + 0.03, 10]} />
+            <meshStandardMaterial color="#ffaa00" metalness={0.8} roughness={0.2} />
+          </mesh>
+          {/* Chrome center cap */}
+          <mesh position={[width / 2 + 0.02, 0, 0]} rotation-z={Math.PI / 2}>
+            <circleGeometry args={[radius * 0.25, 6]} />
+            <meshStandardMaterial color="#eeeeee" metalness={0.95} roughness={0.05} side={THREE.DoubleSide} />
+          </mesh>
+        </>
+      )}
     </group>
   );
 }
@@ -323,8 +463,8 @@ export default function Car({ carRef }: CarProps) {
   const car = carRef.current;
   const color = car.color;
   const body = car.bodyStyle || "sedan";
-  const wheelRadius = car.hasBigWheels ? 0.55 : 0.38;
-  const wheelWidth = car.hasBigWheels ? 0.4 : 0.28;
+  const wt = car.wheelType || "normal";
+  const { radius: wheelRadius } = getWheelSize(wt);
 
   const wheelPositions: [number, number, number][] =
     body === "truck"
@@ -351,8 +491,7 @@ export default function Car({ carRef }: CarProps) {
         <Wheel
           key={i}
           position={pos}
-          radius={wheelRadius}
-          width={wheelWidth}
+          wheelType={wt}
           damaged={car.wheelDamaged}
         />
       ))}

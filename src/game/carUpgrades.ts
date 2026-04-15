@@ -1,7 +1,7 @@
 export type BodyStyle = "sedan" | "sport" | "truck" | "formula";
 export type PaintColor = string;
 export type DecalType = "flames" | "racing_stripes" | "stars" | "lightning" | "flag" | "checker" | null;
-export type WheelType = "normal" | "big" | "bike" | "off-road" | "slick" | "spiked";
+export type WheelType = "normal" | "big" | "bike" | "off-road" | "slick" | "spiked" | "monster";
 
 export const WHEEL_OPTIONS: { key: WheelType; label: string; description: string; emoji: string; steerMult: number; speedMult: number }[] = [
   { key: "normal", label: "Normal", description: "Standard balanced wheels", emoji: "🛞", steerMult: 1.0, speedMult: 1.0 },
@@ -10,6 +10,7 @@ export const WHEEL_OPTIONS: { key: WheelType; label: string; description: string
   { key: "off-road", label: "Off-Road", description: "Great grip, moderate speed", emoji: "🏔️", steerMult: 1.4, speedMult: 0.9 },
   { key: "slick", label: "Slick", description: "Maximum speed, slippery handling", emoji: "💨", steerMult: 0.5, speedMult: 1.2 },
   { key: "spiked", label: "Spiked", description: "Good grip & speed balance", emoji: "⚙️", steerMult: 1.2, speedMult: 1.05 },
+  { key: "monster", label: "Monster Truck", description: "Massive wheels, crushes everything", emoji: "🔥", steerMult: 1.6, speedMult: 0.85 },
 ];
 
 export const DECAL_OPTIONS: { key: DecalType; label: string; description: string }[] = [

@@ -39,7 +39,7 @@ export interface CarState {
   wheelDamaged: boolean;
   wheelDamageTimer: number;
   // Wheel type
-  wheelType: "normal" | "big" | "bike" | "off-road" | "slick" | "spiked";
+  wheelType: "normal" | "big" | "bike" | "off-road" | "slick" | "spiked" | "monster";
   // Waiting for wheel selection (player only)
   awaitingWheelSelection: boolean;
   // Upgraded Engine
