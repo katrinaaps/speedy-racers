@@ -4,7 +4,6 @@ import * as THREE from "three";
 import { CarState, getTrackPosition, getTrackTangent } from "./useGameState";
 import CarDecals from "./CarDecals";
 import type { WheelType } from "./carUpgrades";
-import CarDecals from "./CarDecals";
 
 interface CarProps {
   carRef: React.MutableRefObject<CarState>;
@@ -464,8 +463,8 @@ export default function Car({ carRef }: CarProps) {
   const car = carRef.current;
   const color = car.color;
   const body = car.bodyStyle || "sedan";
-  const wheelRadius = car.hasBigWheels ? 0.55 : 0.38;
-  const wheelWidth = car.hasBigWheels ? 0.4 : 0.28;
+  const wt = car.wheelType || "normal";
+  const { radius: wheelRadius } = getWheelSize(wt);
 
   const wheelPositions: [number, number, number][] =
     body === "truck"
@@ -492,8 +491,7 @@ export default function Car({ carRef }: CarProps) {
         <Wheel
           key={i}
           position={pos}
-          radius={wheelRadius}
-          width={wheelWidth}
+          wheelType={wt}
           damaged={car.wheelDamaged}
         />
       ))}
