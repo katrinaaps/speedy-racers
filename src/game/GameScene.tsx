@@ -311,8 +311,9 @@ export default function GameScene({
       }
     }
 
-    // === STEERING ===
-    let steerMult = p.hasBigWheels ? BIG_WHEELS_STEER_MULT : 1;
+    // === STEERING (uses wheel type stats) ===
+    const wheelInfo = WHEEL_OPTIONS.find(w => w.key === p.wheelType) || WHEEL_OPTIONS[0];
+    let steerMult = wheelInfo.steerMult;
     if (p.wheelDamaged) steerMult *= DAMAGED_STEER_MULT;
     if (k.left) p.lane = Math.max(p.lane - STEER_SPEED * steerMult * dt, -1.5);
     if (k.right) p.lane = Math.min(p.lane + STEER_SPEED * steerMult * dt, 2.5);
