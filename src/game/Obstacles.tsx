@@ -15,8 +15,8 @@ export interface ObstacleData {
 // Level configs: [walls, logs, pedestrians]
 const LEVEL_CONFIG: Record<number, { walls: number; logs: number; peds: number }> = {
   1: { walls: 0, logs: 0, peds: 0 },
-  2: { walls: 2, logs: 2, peds: 4 },
-  3: { walls: 4, logs: 3, peds: 5 },
+  2: { walls: 0, logs: 0, peds: 0 },
+  3: { walls: 0, logs: 0, peds: 0 },
 };
 
 // Generate random obstacles around the track based on level

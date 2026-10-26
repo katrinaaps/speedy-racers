@@ -54,6 +54,31 @@ export default function GameScene({
 }: GameSceneProps) {
   const { camera } = useThree();
   const obstacles = useMemo(() => generateObstacles(level), [level]);
+  const isIce = level === 3;
+  const iceSlide = useRef(0);
+  const crashCooldown = useRef(0);
+
+  // Extra traffic cars: more on higher levels → more crashing
+  const trafficCount = level === 2 ? 6 : level === 3 ? 10 : 0;
+  const traffic = useMemo(() => {
+    const colors = ["#f97316", "#22c55e", "#a855f7", "#ec4899", "#14b8a6", "#facc15", "#ef4444", "#e5e7eb"];
+    const bodies: CarState["bodyStyle"][] = ["sedan", "sport", "truck", "formula"];
+    return Array.from({ length: trafficCount }, (_, i) => ({
+      current: {
+        ...playerRef.current,
+        angle: 0.6 + (i / Math.max(trafficCount, 1)) * Math.PI * 1.6,
+        speed: 0, lane: [0, 1, 2][i % 3], laps: 0, lastCrossed: false,
+        color: colors[i % colors.length], name: `Car ${i + 1}`,
+        bodyStyle: bodies[i % bodies.length], decal: null,
+        hasRockets: false, hasWings: false, hasLaser: false, hasParachute: false,
+        boostActive: false, wingsActive: false, flyHeight: 0, laserFiring: false,
+        isSpinningOut: false, inPitStop: false, spinRotation: 0, wheelDamaged: false,
+        baseSpeed: 0.010 + Math.random() * 0.008,
+        drift: Math.random() * Math.PI * 2,
+      } as CarState & { baseSpeed: number; drift: number },
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [level, trafficCount]);
 
   const checkLap = (car: CarState) => {
     const crossed = car.angle >= Math.PI * 2;
@@ -217,6 +242,38 @@ export default function GameScene({
     const updateAllAI = () => {
       updateAICar(ai1Ref.current, AI1_SPEED, () => 1 + Math.sin(ai1Ref.current.angle * 3) * 0.15);
       updateAICar(ai2Ref.current, AI2_SPEED, () => 1 + Math.cos(ai2Ref.current.angle * 2.5) * 0.12);
+      // Traffic cars weave between lanes (wobbly on ice)
+      for (const t of traffic) {
+        const c = t.current as CarState & { baseSpeed: number; drift: number };
+        if (updateSpinPit(c, dt)) { c.angle %= Math.PI * 2; continue; }
+        c.speed = c.baseSpeed;
+        c.drift += dt * (isIce ? 0.03 : 0.015);
+        c.lane = 1 + Math.sin(c.drift) * (isIce ? 1.4 : 1.1);
+        c.angle = (c.angle + c.speed * dt) % (Math.PI * 2);
+      }
+      // Crashes between any two cars
+      if (crashCooldown.current > 0) crashCooldown.current -= dt;
+      const everyone = [...allCars, ...traffic.map(t => t.current)];
+      for (let i = 0; i < everyone.length; i++) {
+        for (let j = i + 1; j < everyone.length; j++) {
+          const a = everyone[i], b = everyone[j];
+          if (a.inPitStop || b.inPitStop || a.isSpinningOut || b.isSpinningOut) continue;
+          if (a.flyHeight > 1.5 || b.flyHeight > 1.5) continue;
+          const d = Math.abs(((a.angle - b.angle) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI);
+          if (d < 0.035 && Math.abs(a.lane - b.lane) < 0.7) {
+            const involvesPlayer = a === p || b === p;
+            if (involvesPlayer && crashCooldown.current > 0) continue;
+            if (involvesPlayer) crashCooldown.current = 60;
+            // Ice = spin out more often; otherwise a big bump + slow down
+            const victim = Math.random() < 0.5 ? a : b;
+            if (isIce || Math.random() < 0.35) triggerSpinOut(victim);
+            a.speed *= 0.4; b.speed *= 0.4;
+            const push = a.lane < b.lane ? -0.5 : 0.5;
+            a.lane = Math.max(-1.5, Math.min(2.5, a.lane + push));
+            b.lane = Math.max(-1.5, Math.min(2.5, b.lane - push));
+          }
+        }
+      }
     };
 
     // === PLAYER SPIN/PIT CHECK ===
@@ -231,9 +288,11 @@ export default function GameScene({
     const maxSpeed = p.hasUpgradedEngine ? PLAYER_MAX_SPEED * ENGINE_SPEED_MULT : PLAYER_MAX_SPEED;
 
     // Acceleration
-    if (k.up) p.speed = Math.min(p.speed + PLAYER_ACCEL * dt, maxSpeed);
-    else if (k.down) p.speed = Math.max(p.speed - PLAYER_BRAKE * dt, -maxSpeed * 0.3);
-    else p.speed = Math.max(0, p.speed - PLAYER_FRICTION * dt);
+    // Ice: wheels spin (slower accel) and brakes barely grip
+    const grip = isIce ? 0.45 : 1;
+    if (k.up) p.speed = Math.min(p.speed + PLAYER_ACCEL * grip * dt, maxSpeed);
+    else if (k.down) p.speed = Math.max(p.speed - PLAYER_BRAKE * grip * 0.6 * dt, -maxSpeed * 0.3);
+    else p.speed = Math.max(0, p.speed - PLAYER_FRICTION * (isIce ? 0.3 : 1) * dt);
 
     // === BOOST ===
     if (p.boostCooldown > 0) p.boostCooldown -= dt;
@@ -315,8 +374,18 @@ export default function GameScene({
     const wheelInfo = WHEEL_OPTIONS.find(w => w.key === p.wheelType) || WHEEL_OPTIONS[0];
     let steerMult = wheelInfo.steerMult;
     if (p.wheelDamaged) steerMult *= DAMAGED_STEER_MULT;
-    if (k.left) p.lane = Math.max(p.lane - STEER_SPEED * steerMult * dt, -1.5);
-    if (k.right) p.lane = Math.min(p.lane + STEER_SPEED * steerMult * dt, 2.5);
+    if (isIce) {
+      // Ice: steering pushes a sliding momentum that keeps going after you let go
+      if (k.left) iceSlide.current -= STEER_SPEED * steerMult * 0.08 * dt;
+      if (k.right) iceSlide.current += STEER_SPEED * steerMult * 0.08 * dt;
+      iceSlide.current *= Math.exp(-0.015 * dt);
+      p.lane += iceSlide.current * dt;
+      if (p.lane < -1.5 || p.lane > 2.5) { iceSlide.current *= -0.4; p.speed *= 0.7; }
+      p.lane = Math.max(-1.5, Math.min(2.5, p.lane));
+    } else {
+      if (k.left) p.lane = Math.max(p.lane - STEER_SPEED * steerMult * dt, -1.5);
+      if (k.right) p.lane = Math.min(p.lane + STEER_SPEED * steerMult * dt, 2.5);
+    }
 
     // Lane-based speed adjustment
     const offset = (p.lane - 1) * LANE_WIDTH;
@@ -370,6 +439,9 @@ export default function GameScene({
       <Car carRef={playerRef} />
       <Car carRef={ai1Ref} />
       <Car carRef={ai2Ref} />
+      {traffic.map((t, i) => (
+        <Car key={`traffic-${level}-${i}`} carRef={t as React.MutableRefObject<CarState>} />
+      ))}
     </>
   );
 }
