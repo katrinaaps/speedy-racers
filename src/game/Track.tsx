@@ -10,7 +10,7 @@ interface TrackProps {
 const LEVEL_THEMES: Record<number, { ground: string; track: string; line: string }> = {
   1: { ground: "#2d5a1e", track: "#444444", line: "#ffffff" },      // Summer
   2: { ground: "#8b6914", track: "#5a5a5a", line: "#dddddd" },      // Autumn mountains
-  3: { ground: "#d0dde8", track: "#3a3a4a", line: "#cccccc" },      // Winter snow
+  3: { ground: "#d0dde8", track: "#a8d8f0", line: "#ffffff" },      // Winter ice
 };
 
 function Mountain({ position, scale, color }: { position: [number, number, number]; scale: number; color: string }) {
