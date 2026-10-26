@@ -51,6 +51,31 @@ export default function GameScene({
 }: GameSceneProps) {
   const { camera } = useThree();
   const obstacles = useMemo(() => generateObstacles(level), [level]);
+  const isIce = level === 3;
+  const iceSlide = useRef(0);
+  const crashCooldown = useRef(0);
+
+  // Extra traffic cars: more on higher levels → more crashing
+  const trafficCount = level === 2 ? 6 : level === 3 ? 10 : 0;
+  const traffic = useMemo(() => {
+    const colors = ["#f97316", "#22c55e", "#a855f7", "#ec4899", "#14b8a6", "#facc15", "#ef4444", "#e5e7eb"];
+    const bodies: CarState["bodyStyle"][] = ["sedan", "sport", "truck", "formula"];
+    return Array.from({ length: trafficCount }, (_, i) => ({
+      current: {
+        ...playerRef.current,
+        angle: 0.6 + (i / Math.max(trafficCount, 1)) * Math.PI * 1.6,
+        speed: 0, lane: [0, 1, 2][i % 3], laps: 0, lastCrossed: false,
+        color: colors[i % colors.length], name: `Car ${i + 1}`,
+        bodyStyle: bodies[i % bodies.length], decal: null,
+        hasRockets: false, hasWings: false, hasLaser: false, hasParachute: false,
+        boostActive: false, wingsActive: false, flyHeight: 0, laserFiring: false,
+        isSpinningOut: false, inPitStop: false, spinRotation: 0, wheelDamaged: false,
+        baseSpeed: 0.010 + Math.random() * 0.008,
+        drift: Math.random() * Math.PI * 2,
+      } as CarState & { baseSpeed: number; drift: number },
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [level, trafficCount]);
 
   const checkLap = (car: CarState) => {
     const crossed = car.angle >= Math.PI * 2;
