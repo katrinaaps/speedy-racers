@@ -227,6 +227,38 @@ export default function GameScene({
     const updateAllAI = () => {
       updateAICar(ai1Ref.current, AI1_SPEED, () => 1 + Math.sin(ai1Ref.current.angle * 3) * 0.15);
       updateAICar(ai2Ref.current, AI2_SPEED, () => 1 + Math.cos(ai2Ref.current.angle * 2.5) * 0.12);
+      // Traffic cars weave between lanes (wobbly on ice)
+      for (const t of traffic) {
+        const c = t.current as CarState & { baseSpeed: number; drift: number };
+        if (updateSpinPit(c, dt)) { c.angle %= Math.PI * 2; continue; }
+        c.speed = c.baseSpeed;
+        c.drift += dt * (isIce ? 0.03 : 0.015);
+        c.lane = 1 + Math.sin(c.drift) * (isIce ? 1.4 : 1.1);
+        c.angle = (c.angle + c.speed * dt) % (Math.PI * 2);
+      }
+      // Crashes between any two cars
+      if (crashCooldown.current > 0) crashCooldown.current -= dt;
+      const everyone = [...allCars, ...traffic.map(t => t.current)];
+      for (let i = 0; i < everyone.length; i++) {
+        for (let j = i + 1; j < everyone.length; j++) {
+          const a = everyone[i], b = everyone[j];
+          if (a.inPitStop || b.inPitStop || a.isSpinningOut || b.isSpinningOut) continue;
+          if (a.flyHeight > 1.5 || b.flyHeight > 1.5) continue;
+          const d = Math.abs(((a.angle - b.angle) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI);
+          if (d < 0.035 && Math.abs(a.lane - b.lane) < 0.7) {
+            const involvesPlayer = a === p || b === p;
+            if (involvesPlayer && crashCooldown.current > 0) continue;
+            if (involvesPlayer) crashCooldown.current = 60;
+            // Ice = spin out more often; otherwise a big bump + slow down
+            const victim = Math.random() < 0.5 ? a : b;
+            if (isIce || Math.random() < 0.35) triggerSpinOut(victim);
+            a.speed *= 0.4; b.speed *= 0.4;
+            const push = a.lane < b.lane ? -0.5 : 0.5;
+            a.lane = Math.max(-1.5, Math.min(2.5, a.lane + push));
+            b.lane = Math.max(-1.5, Math.min(2.5, b.lane - push));
+          }
+        }
+      }
     };
 
     // === PLAYER SPIN/PIT CHECK ===
