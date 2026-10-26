@@ -273,9 +273,11 @@ export default function GameScene({
     const maxSpeed = p.hasUpgradedEngine ? PLAYER_MAX_SPEED * ENGINE_SPEED_MULT : PLAYER_MAX_SPEED;
 
     // Acceleration
-    if (k.up) p.speed = Math.min(p.speed + PLAYER_ACCEL * dt, maxSpeed);
-    else if (k.down) p.speed = Math.max(p.speed - PLAYER_BRAKE * dt, -maxSpeed * 0.3);
-    else p.speed = Math.max(0, p.speed - PLAYER_FRICTION * dt);
+    // Ice: wheels spin (slower accel) and brakes barely grip
+    const grip = isIce ? 0.45 : 1;
+    if (k.up) p.speed = Math.min(p.speed + PLAYER_ACCEL * grip * dt, maxSpeed);
+    else if (k.down) p.speed = Math.max(p.speed - PLAYER_BRAKE * grip * 0.6 * dt, -maxSpeed * 0.3);
+    else p.speed = Math.max(0, p.speed - PLAYER_FRICTION * (isIce ? 0.3 : 1) * dt);
 
     // === BOOST ===
     if (p.boostCooldown > 0) p.boostCooldown -= dt;
@@ -356,8 +358,18 @@ export default function GameScene({
     // === STEERING ===
     let steerMult = p.hasBigWheels ? BIG_WHEELS_STEER_MULT : 1;
     if (p.wheelDamaged) steerMult *= DAMAGED_STEER_MULT;
-    if (k.left) p.lane = Math.max(p.lane - STEER_SPEED * steerMult * dt, -1.5);
-    if (k.right) p.lane = Math.min(p.lane + STEER_SPEED * steerMult * dt, 2.5);
+    if (isIce) {
+      // Ice: steering pushes a sliding momentum that keeps going after you let go
+      if (k.left) iceSlide.current -= STEER_SPEED * steerMult * 0.08 * dt;
+      if (k.right) iceSlide.current += STEER_SPEED * steerMult * 0.08 * dt;
+      iceSlide.current *= Math.exp(-0.015 * dt);
+      p.lane += iceSlide.current * dt;
+      if (p.lane < -1.5 || p.lane > 2.5) { iceSlide.current *= -0.4; p.speed *= 0.7; }
+      p.lane = Math.max(-1.5, Math.min(2.5, p.lane));
+    } else {
+      if (k.left) p.lane = Math.max(p.lane - STEER_SPEED * steerMult * dt, -1.5);
+      if (k.right) p.lane = Math.min(p.lane + STEER_SPEED * steerMult * dt, 2.5);
+    }
 
     // Lane-based speed adjustment
     const offset = (p.lane - 1) * LANE_WIDTH;
@@ -411,6 +423,9 @@ export default function GameScene({
       <Car carRef={playerRef} />
       <Car carRef={ai1Ref} />
       <Car carRef={ai2Ref} />
+      {traffic.map((t, i) => (
+        <Car key={`traffic-${level}-${i}`} carRef={t as React.MutableRefObject<CarState>} />
+      ))}
     </>
   );
 }
